@@ -10,6 +10,16 @@ type Bookmark struct {
 	Tags map[string]bool
 }
 
+type BookmarkResponse struct {
+	User      string
+	Bookmarks []*Bookmark
+}
+
+type BookmarkDump struct {
+	User      string
+	Bookmarks map[string]*Bookmark
+}
+
 func newBookmark(url string) *Bookmark {
 	u, _ := uuid.NewV4()
 	return &Bookmark{

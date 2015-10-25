@@ -120,8 +120,6 @@ func (ws *WebSocket) writeFrame(b []byte) (n int, err error) {
 
 func upgrade(w http.ResponseWriter, req *http.Request) *WebSocket {
 
-	//pid := req.URL.Query().Get("id")
-
 	var guid = []byte("258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
 	key := req.Header.Get("Sec-WebSocket-Key")
 
@@ -134,7 +132,6 @@ func upgrade(w http.ResponseWriter, req *http.Request) *WebSocket {
 
 	h, _ := w.(http.Hijacker)
 	conn, rw, _ := h.Hijack()
-	//defer conn.Close()
 
 	buf := make([]byte, 0, 4096)
 

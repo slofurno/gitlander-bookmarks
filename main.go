@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -20,37 +21,33 @@ func main() {
 
 func websocketHandler(w http.ResponseWriter, req *http.Request) {
 	userid := req.URL.Query().Get("user")
-	fmt.Println("userid: ", userid)
+
 	if userid == "" {
 		return
 	}
 
-	if _, ok := CurrentUsers[userid]; !ok {
+	var user *User
+	var ok bool
+
+	if user, ok = CurrentUsers[userid]; !ok {
 		return
 	}
 
 	ws := upgrade(w, req)
 
-	user := &UserConnection{
+	connection := &UserConnection{
 		Socket: ws,
 	}
 
-	ws.WriteS("welcome")
-
-	//lock this
-	CurrentUsers[userid].listeners <- user
+	user.listeners <- connection
 
 	func() {
 		for {
-
 			read, code, err := ws.Read()
-
 			if err != nil || code == Close {
 				return
 			}
-
 			fmt.Println(read)
-			ws.Inbox <- []byte("thanks for msg")
 		}
 	}()
 
@@ -87,10 +84,24 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request) {
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
 
-	user := newUser()
-	CurrentUsers[user.Id] = user
+	switch r.Method {
+	case "POST":
+		user := newUser()
+		CurrentUsers[user.Id] = user
 
-	w.Write([]byte(user.Id))
+		w.Write([]byte(user.Id))
+	case "GET":
+
+		userids := []string{}
+		for id, _ := range CurrentUsers {
+			userids = append(userids, id)
+		}
+
+		j, _ := json.Marshal(userids)
+
+		w.Write(j)
+
+	}
 
 }
 
@@ -110,13 +121,19 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, _ := ioutil.ReadAll(r.Body)
-	body := string(b)
+	method := r.Method
 
-	bookmark := newBookmark(body)
+	switch method {
 
-	user.UpdateBookmark(bookmark)
+	case "POST":
+		b, _ := ioutil.ReadAll(r.Body)
+		body := string(b)
+		bookmark := newBookmark(body)
+		user.UpdateBookmark(bookmark)
+		fmt.Fprintln(w, bookmark.Id)
 
-	fmt.Fprintln(w, bookmark.Id)
+	case "GET":
+		w.Write(<-user.GetBookmarks())
+	}
 
 }
