@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/sha1"
 	"encoding/base64"
+	"net"
 	"net/http"
 )
 
@@ -20,6 +21,7 @@ type WebSocket struct {
 	Inbox  chan []byte
 	Closed chan bool
 	rw     *bufio.ReadWriter
+	conn   net.Conn
 }
 
 func (ws *WebSocket) Worker() {
@@ -30,28 +32,22 @@ func (ws *WebSocket) Worker() {
 		case <-ws.Closed:
 			return
 		case message := <-ws.Inbox:
-			ws.Write(message)
+			ws.writeFrame(message)
 		}
 	}
 
 }
 
-func (ws *WebSocket) Listen() {
-	/*
-		go func() {
-			frame, code, err := ReadFrame(reader)
-			if err != nil {
-				fmt.Println(err.Error())
-				//done <- true
-				close(d)
-				return
-			} else if code == Close {
+func (ws *WebSocket) Write(b []byte) {
+	ws.Inbox <- b
+}
 
-				close(d)
-				return
-			}
-		}()
-	*/
+func (ws *WebSocket) WriteS(s string) {
+	ws.Inbox <- []byte(s)
+}
+
+func (ws *WebSocket) Close() error {
+	return ws.conn.Close()
 }
 
 func (ws *WebSocket) Read() (string, OpCode, error) {
@@ -70,20 +66,13 @@ func ReadFrame(reader *bufio.Reader) (string, OpCode, error) {
 		return "", G, err
 	}
 
-	//	fmt.Printf("header length read : %d \n", hlen)
-
-	//var isFinal = header[0] >> 7
 	var opcode = header[0] & 15
-	//var isMasked = header[1] >> 7
 	var length = int(header[1] & 127)
-	//fmt.Printf("raw header : %b %b \n", header[0], header[1])
-	//fmt.Printf("header : %d %d %d %d \n", isFinal, opcode, isMasked, length)
 
 	if opcode == 8 {
 		return "", Close, nil
 	}
 
-	//client to server always has a mask
 	mask := make([]byte, 4)
 	_, _ = reader.Read(mask)
 
@@ -92,13 +81,6 @@ func ReadFrame(reader *bufio.Reader) (string, OpCode, error) {
 	_, _ = reader.Read(body)
 
 	for i := 0; i < length; i++ {
-		/*
-		   next,err := reader.ReadByte()
-		   if err!=nil{
-		     log.Printf("error reading frame: %v", err)
-		     break
-		   }*/
-		//unmask
 		body[i] = body[i] ^ mask[i%4]
 	}
 
@@ -108,15 +90,12 @@ func ReadFrame(reader *bufio.Reader) (string, OpCode, error) {
 
 }
 
-func (ws *WebSocket) Write(b []byte) (n int, err error) {
+func (ws *WebSocket) writeFrame(b []byte) (n int, err error) {
 
 	rw := ws.rw
 	length := len(b)
 	max16 := 65535
-	//header := make([]byte, 0)
-	//	fmt.Println(length)
-	//as long as this works in all browsers, then its fine for < 126
-	//len64 := (length >> 16) & 255
+
 	blen := (length >> 16) & 255
 	llen := (length >> 8) & 255
 	rlen := length & 255
@@ -132,15 +111,6 @@ func (ws *WebSocket) Write(b []byte) (n int, err error) {
 	}
 	rw.Write(header)
 
-	//rw.Write([]byte{129, 127, byte(0), byte(0), byte(0), byte(len64), byte(llen), byte(rlen)})
-
-	/*
-	   if length > 125 {
-
-	   } else {
-	     rw.Write([]byte{129, byte(length)})
-	   }
-	*/
 	rw.Write(b)
 	rw.Flush()
 
@@ -163,7 +133,7 @@ func upgrade(w http.ResponseWriter, req *http.Request) *WebSocket {
 	var challengeresponse = base64.StdEncoding.EncodeToString(shaed)
 
 	h, _ := w.(http.Hijacker)
-	_, rw, _ := h.Hijack()
+	conn, rw, _ := h.Hijack()
 	//defer conn.Close()
 
 	buf := make([]byte, 0, 4096)
@@ -178,6 +148,7 @@ func upgrade(w http.ResponseWriter, req *http.Request) *WebSocket {
 
 	ws := &WebSocket{
 		rw:     rw,
+		conn:   conn,
 		Closed: make(chan bool),
 		Inbox:  make(chan []byte, 10),
 	}
