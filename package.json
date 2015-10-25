@@ -1,0 +1,18 @@
+{
+  "name": "bookmarks",
+  "version": "0.8.1",
+  "description": "share bookmarks",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "slofurno",
+  "license": "GPL-2.0",
+  "dependencies": {
+    "react": "^0.14.0",
+    "react-dom": "^0.14.0"
+  },
+  "devDependencies": {
+    "jsx-loader": "^0.13.2"
+  }
+}
