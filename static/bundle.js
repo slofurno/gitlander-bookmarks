@@ -68,7 +68,7 @@
 	      self.setState(result);
 	      console.log(result);
 
-	      var ws = new WebSocket("ws://localhost:555/ws?user="+result.user+"&token="+result.token);
+	      var ws = new WebSocket("ws://gitlander.com:555/ws?user="+result.user+"&token="+result.token);
 
 	      ws.onmessage=function(e){
 	        var updates = JSON.parse(e.data);
