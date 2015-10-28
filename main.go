@@ -40,6 +40,7 @@ type RequestContext struct {
 func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestContext)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization")
 		context := &RequestContext{}
 		auth := r.Header.Get("Authorization")
 
