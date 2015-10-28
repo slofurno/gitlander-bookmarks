@@ -29,7 +29,7 @@ func main() {
 	http.HandleFunc("/api/bookmarks", authed(bookmarkHandler))
 	http.HandleFunc("/api/user", userHandler)
 	http.Handle("/", http.FileServer(http.Dir("static")))
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe(":555", nil)
 }
 
 type RequestContext struct {
@@ -39,14 +39,25 @@ type RequestContext struct {
 
 func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestContext)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		context := &RequestContext{}
 		auth := r.Header.Get("Authorization")
 
 		authParams := strings.Split(auth, ":")
 
+		var userid string = ""
+		var token string = ""
+
 		if len(authParams) == 2 {
-			userid := authParams[0]
-			token := authParams[1]
+			userid = authParams[0]
+			token = authParams[1]
+		} else {
+			qs := r.URL.Query()
+			userid = qs.Get("user")
+			token = qs.Get("token")
+		}
+
+		if userid != "" && token != "" {
 
 			var user *User
 			var ok bool
@@ -61,6 +72,7 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 				if hmac.Equal(expected, tb) {
 					context.isAuthed = true
 					context.user = user
+					fmt.Println("user authed as: ", user.Id)
 					//          w.WriteHeader(http.StatusForbidden)
 				}
 			}
@@ -172,12 +184,14 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 	switch method {
 
 	case "POST":
+		b, _ := ioutil.ReadAll(r.Body)
+		body := string(b)
+		fmt.Println(body)
 		if !context.isAuthed {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		b, _ := ioutil.ReadAll(r.Body)
-		body := string(b)
+
 		bookmark := newBookmark(body)
 		context.user.UpdateBookmark(bookmark)
 		fmt.Fprintln(w, bookmark.Id)

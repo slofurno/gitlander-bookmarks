@@ -25,8 +25,8 @@ var httpClient = function httpClient(){
 	};
 
 	var Post = function(uri,tempest){
+		tempest=tempest||"";
 		var promise = new Promise( function (resolve, reject) {
-
 			var client = new XMLHttpRequest();
 
 			client.onload=function(e){
@@ -44,6 +44,8 @@ var httpClient = function httpClient(){
 			client.send(json);
 
 		});
+
+		return promise;
 
 	};
 
