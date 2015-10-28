@@ -8,7 +8,7 @@ var client = HttpClient();
 
 var Welcome = React.createClass({
   getInitialState: function() {
-    return {user:"sdfsdf", token:"???"};
+    return {user:"sdfsdf", token:"???", bookmarks:[]};
   },
   componentDidMount: function() {
     var self = this;
@@ -26,7 +26,14 @@ var Welcome = React.createClass({
 
       ws.onmessage=function(e){
         var updates = JSON.parse(e.data);
-        console.log(updates);
+        var newbookmarks=self.state.bookmarks.slice();
+
+        updates.forEach(function(update){
+          var dd=JSON.parse(update.Url);
+          newbookmarks.push(dd);
+        });
+
+        self.setState({bookmarks:newbookmarks});
       };
     });
 /*
@@ -45,17 +52,25 @@ var Welcome = React.createClass({
 
     var fullstring=part1+this.state.user+":"+this.state.token+part3;
 
+    var bookmarklist = this.state.bookmarks.map(function(bookmark){
+
+      var tags = bookmark.tags.reduce(function(acc,cur){
+        return acc+cur;
+      },"tags: ");
+
+      return(
+        <div className="tester raised"> {bookmark.description}  {bookmark.url}  {tags}</div>
+      )
+
+
+    });
+
     return(
       <div>
         <div className="smaller">
           {fullstring}
         </div>
-        <div className="tester raised">
-
-          {this.state.user}
-          {this.state.token}
-          {this.props.message}
-        </div>
+        bookmarklist
       </div>
     )
   }

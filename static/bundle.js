@@ -54,7 +54,7 @@
 
 	var Welcome = React.createClass({displayName: "Welcome",
 	  getInitialState: function() {
-	    return {user:"sdfsdf", token:"???"};
+	    return {user:"sdfsdf", token:"???", bookmarks:[]};
 	  },
 	  componentDidMount: function() {
 	    var self = this;
@@ -72,7 +72,14 @@
 
 	      ws.onmessage=function(e){
 	        var updates = JSON.parse(e.data);
-	        console.log(updates);
+	        var newbookmarks=self.state.bookmarks.slice();
+
+	        updates.forEach(function(update){
+	          var dd=JSON.parse(update.Url);
+	          newbookmarks.push(dd);
+	        });
+
+	        self.setState({bookmarks:newbookmarks});
 	      };
 	    });
 	/*
@@ -91,17 +98,25 @@
 
 	    var fullstring=part1+this.state.user+":"+this.state.token+part3;
 
+	    var bookmarklist = this.state.bookmarks.map(function(bookmark){
+
+	      var tags = bookmark.tags.reduce(function(acc,cur){
+	        return acc+cur;
+	      },"tags: ");
+
+	      return(
+	        React.createElement("div", {className: "tester raised"}, " ", bookmark.description, "  ", bookmark.url, "  ", tags)
+	      )
+
+
+	    });
+
 	    return(
 	      React.createElement("div", null, 
 	        React.createElement("div", {className: "smaller"}, 
 	          fullstring
 	        ), 
-	        React.createElement("div", {className: "tester raised"}, 
-
-	          this.state.user, 
-	          this.state.token, 
-	          this.props.message
-	        )
+	        "bookmarklist"
 	      )
 	    )
 	  }
