@@ -4,6 +4,12 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
+type BookmarkRequest struct {
+	User string `json:"user"`
+	Url  string
+	Tags []string
+}
+
 type Bookmark struct {
 	Id   string
 	Url  string

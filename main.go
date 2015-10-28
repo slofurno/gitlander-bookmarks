@@ -24,6 +24,8 @@ func init() {
 
 func main() {
 
+	http.HandleFunc("/api/img/", authed(imgHandler))
+	//http.HandleFunc("/api/img", imgHandler)
 	http.HandleFunc("/ws", authed(websocketHandler))
 	http.HandleFunc("/api/follow", authed(subscriptionHandler))
 	http.HandleFunc("/api/bookmarks", authed(bookmarkHandler))
@@ -81,6 +83,20 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 
 		h(w, r, context)
 	}
+}
+
+func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
+
+	body := r.URL.Query().Get("body")
+
+	if !context.isAuthed {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	bookmark := newBookmark(body)
+	context.user.UpdateBookmark(bookmark)
+	fmt.Println("adding bookmark", body)
 }
 
 func websocketHandler(w http.ResponseWriter, req *http.Request, context *RequestContext) {
