@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 var CurrentUsers = map[string]*User{}
@@ -23,52 +24,60 @@ func init() {
 
 func main() {
 
-	http.HandleFunc("/ws", websocketHandler)
-	http.HandleFunc("/api/follow", subscriptionHandler)
+	http.HandleFunc("/ws", authed(websocketHandler))
+	http.HandleFunc("/api/follow", authed(subscriptionHandler))
 	http.HandleFunc("/api/bookmarks", authed(bookmarkHandler))
 	http.HandleFunc("/api/user", userHandler)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	http.ListenAndServe(":80", nil)
 }
 
-func authed(h func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+type RequestContext struct {
+	isAuthed bool
+	user     *User
+}
+
+func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestContext)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-		userid := r.URL.Query().Get("user")
+		context := &RequestContext{}
+		auth := r.Header.Get("Authorization")
 
-		if token == "" || userid == "" {
-			return
+		authParams := strings.Split(auth, ":")
+
+		if len(authParams) == 2 {
+			userid := authParams[0]
+			token := authParams[1]
+
+			var user *User
+			var ok bool
+
+			if user, ok = CurrentUsers[userid]; ok {
+
+				tb, _ := base32.StdEncoding.DecodeString(token)
+				mac := hmac.New(sha256.New, secretKey)
+				mac.Write([]byte(userid))
+				expected := mac.Sum(nil)
+
+				if hmac.Equal(expected, tb) {
+					context.isAuthed = true
+					context.user = user
+					//          w.WriteHeader(http.StatusForbidden)
+				}
+			}
 		}
 
-		tb, _ := base32.StdEncoding.DecodeString(token)
-		mac := hmac.New(sha256.New, secretKey)
-		mac.Write([]byte(userid))
-		expected := mac.Sum(nil)
-
-		if !hmac.Equal(expected, tb) {
-			fmt.Println("auth failed")
-			return
-		}
-
-		fmt.Println("auth ok")
-
-		h(w, r)
+		h(w, r, context)
 	}
 }
 
-func websocketHandler(w http.ResponseWriter, req *http.Request) {
-	userid := req.URL.Query().Get("user")
+func websocketHandler(w http.ResponseWriter, req *http.Request, context *RequestContext) {
 
-	if userid == "" {
+	if !context.isAuthed {
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	var user *User
-	var ok bool
-
-	if user, ok = CurrentUsers[userid]; !ok {
-		return
-	}
+	user := context.user
 
 	ws := upgrade(w, req)
 
@@ -91,31 +100,25 @@ func websocketHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("disconnected")
 }
 
-func subscriptionHandler(w http.ResponseWriter, r *http.Request) {
-	qs := r.URL.Query()
-	userid := qs.Get("user")
-	sub := qs.Get("sub")
+func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
 
-	if userid == "" {
-		fmt.Println("no userid")
+	if !context.isAuthed {
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	var user *User
+	sub := r.URL.Query().Get("follow")
+
 	var other *User
 	var ok bool
 
-	if user, ok = CurrentUsers[userid]; !ok {
-		fmt.Println("cant find user")
-		return
-	}
-
 	if other, ok = CurrentUsers[sub]; !ok {
-		fmt.Println("cant find sub")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("cant find sub"))
 		return
 	}
 
-	other.AddSub(user)
+	other.AddSub(context.user)
 
 }
 
@@ -162,35 +165,25 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func bookmarkHandler(w http.ResponseWriter, r *http.Request) {
-	qs := r.URL.Query()
-	userid := qs.Get("user")
-
-	if userid == "" {
-		fmt.Println("no userid")
-		return
-	}
-
-	var user *User
-	var ok bool
-
-	if user, ok = CurrentUsers[userid]; !ok {
-		return
-	}
+func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
 
 	method := r.Method
 
 	switch method {
 
 	case "POST":
+		if !context.isAuthed {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		b, _ := ioutil.ReadAll(r.Body)
 		body := string(b)
 		bookmark := newBookmark(body)
-		user.UpdateBookmark(bookmark)
+		context.user.UpdateBookmark(bookmark)
 		fmt.Fprintln(w, bookmark.Id)
 
 	case "GET":
-		w.Write(<-user.GetBookmarks())
+		w.Write(<-context.user.GetBookmarks())
 	}
 
 }

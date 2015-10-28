@@ -8,21 +8,19 @@ var client = HttpClient();
 
 var Welcome = React.createClass({
   getInitialState: function() {
-    return {name:"steve"};
+    return {userid:"", token:""};
   },
   componentDidMount: function() {
-
-
 
     var hostname=location.hostname;
     if (hostname===""){
       hostname="localhost";
     }
 
-    client.get("/api/user").then(function(result){
+    client.post("/api/user").then(function(result){
       console.log(result);
     });
-
+/*
     console.log(hostname);
     var ws = new WebSocket("ws://"+hostname+"/ws?user=748ddaa2-a558-42e7-61d0-6e0bb4899f37");
 
@@ -30,9 +28,8 @@ var Welcome = React.createClass({
       var updates = JSON.parse(e.data);
       console.log(updates);
     };
+    */
 
-    //this.loadCommentsFromServer();
-    //setInterval(this.refreshTempests, 5000);
   },
   render:function(){
 
