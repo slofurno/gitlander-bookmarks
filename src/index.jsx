@@ -22,13 +22,15 @@ var Welcome = React.createClass({
       self.setState(result);
       console.log(result);
 
-      var ws = new WebSocket("ws://gitlander.com:555/ws?user="+result.user+"&token="+result.token);
+      var ws = new WebSocket("ws://localhost:555/ws?user="+result.user+"&token="+result.token);
 
       ws.onmessage=function(e){
         var updates = JSON.parse(e.data);
         var newbookmarks=self.state.bookmarks.slice();
 
-        updates.forEach(function(update){
+        console.log(updates);
+
+        updates.Bookmarks.forEach(function(update){
           var dd=JSON.parse(update.Url);
           newbookmarks.push(dd);
         });
@@ -70,7 +72,7 @@ var Welcome = React.createClass({
         <div className="smaller">
           {fullstring}
         </div>
-        bookmarklist
+        {bookmarklist}
       </div>
     )
   }
