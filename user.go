@@ -31,13 +31,13 @@ func newUser() *User {
 		Bookmarks:     make(map[string]*Bookmark),
 		Subscribers:   make(map[string]*User),
 		Subscriptions: make(map[string]*User),
-		Connections:   make([]*UserConnection, 0),
-		Inbox:         make(chan []byte, 10),
-		subs:          make(chan *subChange, 10),
-		updates:       make(chan *Bookmark, 10),
-		listeners:     make(chan *UserConnection, 4),
-		leavers:       make(chan *UserConnection, 4),
-		fullUpdates:   make(chan chan []byte, 4),
+		Connections:   []*UserConnection{},
+		Inbox:         make(chan []byte, 128),
+		subs:          make(chan *subChange, 16),
+		updates:       make(chan *Bookmark, 32),
+		listeners:     make(chan *UserConnection, 16),
+		leavers:       make(chan *UserConnection, 16),
+		fullUpdates:   make(chan chan []byte, 8),
 	}
 
 	go user.Publish()
