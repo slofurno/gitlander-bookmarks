@@ -103,7 +103,11 @@ var Welcome = React.createClass({
 
     var users = this.state.userlookup;
 
-    var usersummaries = Object.keys(users).map(function(userid){
+    console.log(users);
+
+    var usersummaries = Object.keys(users).filter(function(userid){
+      return Object.keys(users[userid]).length>0;
+    }).map(function(userid){
 
       var user = users[userid];
       var summary="";
