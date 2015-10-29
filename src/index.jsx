@@ -27,9 +27,13 @@ var Welcome = React.createClass({
       var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
 
       ws.onmessage=function(e){
-        var updates = JSON.parse(e.data);
+        var update = JSON.parse(e.data);
         var newbookmarks=self.state.bookmarks.slice();
+        var dd=JSON.parse(update.Url)
+        dd.Id=update.Id;
+        newbookmarks.push(dd);
 
+/*
         console.log(updates);
 
         updates.Bookmarks.forEach(function(update){
@@ -38,7 +42,7 @@ var Welcome = React.createClass({
           dd.Id=update.Id;
           newbookmarks.push(dd);
         });
-
+*/
         self.setState({bookmarks:newbookmarks});
       };
     });

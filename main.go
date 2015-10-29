@@ -6,13 +6,39 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
+	"github.com/nu7hatch/gouuid"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-var CurrentUsers = map[string]*User{}
+var userSubscriptions = map[string]*Collection{}
+var userBookmarks = map[string]*Collection{}
+
+var userInfos = map[string]*userInfo{}
+
 var secretKey []byte
+var database = newFilebase("test.db")
+
+type userInfo struct {
+	subscriptions *Collection
+	bookmarks     *Collection
+}
+
+type RequestContext struct {
+	isAuthed bool
+	userinfo *userInfo
+	userid   string
+}
+
+func newUserInfo() *userInfo {
+	return &userInfo{subscriptions: newCollection(), bookmarks: newCollection()}
+}
+
+func makeUuid() string {
+	u, _ := uuid.NewV4()
+	return u.String()
+}
 
 func init() {
 	var err error
@@ -32,11 +58,6 @@ func main() {
 	http.HandleFunc("/api/user", userHandler)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	http.ListenAndServe(":555", nil)
-}
-
-type RequestContext struct {
-	isAuthed bool
-	user     *User
 }
 
 func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestContext)) http.HandlerFunc {
@@ -62,10 +83,10 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 
 		if userid != "" && token != "" {
 
-			var user *User
+			var user *userInfo
 			var ok bool
 
-			if user, ok = CurrentUsers[userid]; ok {
+			if user, ok = userInfos[userid]; ok {
 
 				tb, _ := base32.StdEncoding.DecodeString(token)
 				mac := hmac.New(sha256.New, secretKey)
@@ -74,8 +95,9 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 
 				if hmac.Equal(expected, tb) {
 					context.isAuthed = true
-					context.user = user
-					fmt.Println("user authed as: ", user.Id)
+					context.userinfo = user
+					context.userid = userid
+					fmt.Println("user authed as: ", userid)
 					//          w.WriteHeader(http.StatusForbidden)
 				}
 			}
@@ -94,8 +116,8 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 		return
 	}
 
-	bookmark := newBookmark(body)
-	context.user.UpdateBookmark(bookmark)
+	bookmark := &Bookmark{Id: makeUuid(), Url: body, Owner: context.userid}
+	context.userinfo.bookmarks.Add(bookmark.Id, bookmark)
 	fmt.Println("adding bookmark", body)
 }
 
@@ -106,15 +128,9 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 		return
 	}
 
-	user := context.user
-
 	ws := upgrade(w, req)
 
-	connection := &UserConnection{
-		Socket: ws,
-	}
-
-	user.listeners <- connection
+	connection := newUserConnection(context.userinfo.subscriptions, ws)
 
 	func() {
 		for {
@@ -125,6 +141,8 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 			fmt.Println(read)
 		}
 	}()
+
+	connection.onstop()
 
 	fmt.Println("disconnected")
 }
@@ -138,16 +156,18 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 
 	sub := r.URL.Query().Get("follow")
 
-	var other *User
+	//var other *userInfo
 	var ok bool
 
-	if other, ok = CurrentUsers[sub]; !ok {
+	if _, ok = userInfos[sub]; !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("cant find sub"))
 		return
 	}
 
-	other.AddSub(context.user)
+	context.userinfo.subscriptions.Add(sub, true)
+
+	//other.AddSub(context.user)
 
 }
 
@@ -155,11 +175,14 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
-		user := newUser()
-		CurrentUsers[user.Id] = user
+
+		userid := makeUuid()
+		userinfo := newUserInfo()
+		userinfo.subscriptions.Add(userid, userid)
+		userInfos[userid] = userinfo
 
 		mac := hmac.New(sha256.New, secretKey)
-		mac.Write([]byte(user.Id))
+		mac.Write([]byte(userid))
 		b := mac.Sum(nil)
 
 		token := base32.StdEncoding.EncodeToString(b)
@@ -167,7 +190,7 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		userResponse := struct {
 			User  string `json:"user"`
 			Token string `json:"token"`
-		}{user.Id, token}
+		}{userid, token}
 
 		jb, err := json.Marshal(userResponse)
 
@@ -180,15 +203,6 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(jb)
 
 	case "GET":
-
-		userids := []string{}
-		for id, _ := range CurrentUsers {
-			userids = append(userids, id)
-		}
-
-		j, _ := json.Marshal(userids)
-
-		w.Write(j)
 
 	}
 
@@ -209,12 +223,12 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			return
 		}
 
-		bookmark := newBookmark(body)
-		context.user.UpdateBookmark(bookmark)
+		bookmark := &Bookmark{Id: makeUuid(), Url: body, Owner: context.userid}
+		context.userinfo.bookmarks.Add(bookmark.Id, bookmark)
 		fmt.Fprintln(w, bookmark.Id)
 
 	case "GET":
-		w.Write(<-context.user.GetBookmarks())
+		//w.Write(<-context.user.GetBookmarks())
 	}
 
 }

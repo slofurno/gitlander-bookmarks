@@ -147,7 +147,7 @@ func upgrade(w http.ResponseWriter, req *http.Request) *WebSocket {
 		rw:     rw,
 		conn:   conn,
 		Closed: make(chan bool),
-		Inbox:  make(chan []byte, 10),
+		Inbox:  make(chan []byte, 256),
 	}
 
 	go ws.Worker()
