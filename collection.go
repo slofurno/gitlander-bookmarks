@@ -61,11 +61,19 @@ func (c *Collection) Fetch() []interface{} {
 func (c *Collection) Add(key string, value interface{}) {
 
 	add := func() {
-		c.store[key] = value
 
-		for _, f := range c.callbacks {
-			f.added(key, value)
+		if _, ok := c.store[key]; !ok {
+			c.store[key] = value
+			for _, f := range c.callbacks {
+				f.added(key, value)
+			}
+		} else {
+			c.store[key] = value
+			for _, f := range c.callbacks {
+				f.changed(key, value)
+			}
 		}
+		//TODO: is this how i want to handle repeat adds?
 	}
 
 	c.events <- add

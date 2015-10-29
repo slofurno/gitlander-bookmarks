@@ -108,6 +108,7 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 	}
 }
 
+//TODO: this entire handler is a duplicate, as a workaround for restrictions on mixed content
 func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
 
 	body := r.URL.Query().Get("body")
@@ -117,9 +118,28 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 		return
 	}
 
-	bookmark := &Bookmark{Id: makeUuid(), Url: body, Owner: context.userid}
+	br := &BookmarkRequest{}
+	err := json.Unmarshal([]byte(body), br)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	bookmark := &Bookmark{
+		Id:          makeUuid(),
+		Url:         br.Url,
+		Description: br.Description,
+		Tags:        br.Tags,
+		Owner:       context.userid,
+	}
+
+	for _, tag := range br.Tags {
+		context.userinfo.summary[tag] += 1
+	}
+
 	context.userinfo.bookmarks.Add(bookmark.Id, bookmark)
-	fmt.Println("adding bookmark", body)
+	fmt.Fprintln(w, bookmark.Id)
 }
 
 func websocketHandler(w http.ResponseWriter, req *http.Request, context *RequestContext) {

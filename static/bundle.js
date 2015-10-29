@@ -49,10 +49,11 @@
 	var HttpClient = __webpack_require__(1);
 	var React = __webpack_require__(2);
 	var ReactDOM = __webpack_require__(158);
+	var UserSearch = __webpack_require__(159);
 
 	var client = HttpClient();
 
-	var Welcome = React.createClass({displayName: "Welcome",
+	var App = React.createClass({displayName: "App",
 	  getInitialState: function() {
 	    var hostname=location.hostname;
 	    if (hostname===""){
@@ -67,27 +68,47 @@
 	      userlookup:{}
 	    };
 	  },
+	  addSub:function(e){
+	    console.log(e);
+
+	    var options={
+	      headers:{Authorization:this.state.user+":"+this.state.token},
+	      params:{follow:e}
+	    };
+
+	    client.post("/api/follow","",options).then(function(result){
+	      console.log(result);
+	    }).catch(function(err){
+	      console.log(err);
+	    });
+
+	  },
 	  componentDidMount: function() {
 	    var self = this;
 
 	    client.get("/api/user").then(function(result){
-	      self.setState({userlookup:result});
+	      self.setState({userlookup:JSON.parse(result)});
+	    }).catch(function(err){
+	      console.log(err);
 	    });
 
 	    client.post("/api/user").then(function(result){
-	      self.setState(result);
-	      console.log(result);
 
-	      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
+	      var userInfo=JSON.parse(result);
+	      self.setState(userInfo);
+	      console.log("authorization:",userInfo.user+":"+userInfo.token);
+
+	      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+userInfo.user+"&token="+userInfo.token);
 
 	      ws.onmessage=function(e){
 	        var update = JSON.parse(e.data);
 	        var newbookmarks=self.state.bookmarks.slice();
-	        //var dd=JSON.parse(update.Url)
-	        //dd.Id=update.Id;
+
 	        console.log(update);
 	        newbookmarks.push(update);
 
+	        //TODO:
+	        /*
 	        var lookup = self.state.userlookup;
 	        if (typeof lookup[update.Owner]==="undefined"){
 	          lookup[update.Owner]={};
@@ -101,26 +122,15 @@
 	          }
 	          tags[tag]+=1;
 	        });
+	        */
 
-
-
-	/*
-	        console.log(updates);
-
-	        updates.Bookmarks.forEach(function(update){
-	          var dd=JSON.parse(update.Url);
-	          //until i fix this, copy the id over
-	          dd.Id=update.Id;
-	          newbookmarks.push(dd);
-	        });
-	*/
-	        self.setState({bookmarks:newbookmarks,userlookup:lookup});
+	        //,userlookup:lookup
+	        self.setState({bookmarks:newbookmarks});
 	      };
+	    }).catch(function(err){
+	      console.log(err);
 	    });
-	/*
-	    console.log(hostname);
 
-	    */
 
 	  },
 	  render:function(){
@@ -130,7 +140,7 @@
 	    var part3='";document.body.removeChild(_tevsel);}})();';
 
 	    console.log("RENDERING");
-	    //http://gitlander.com:555/api/img/?'
+
 	    var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
 
 	    var bookmarklist = this.state.bookmarks.map(function(bookmark){
@@ -139,7 +149,7 @@
 	      });
 
 	      console.log("id: ", bookmark.Id);
-	      return React.createElement("div", {key: bookmark.Id, className: "tester raised"}, 
+	      return React.createElement("div", {key: bookmark.Id, className: "bookmark raised"}, 
 	        React.createElement("div", null, bookmark.Description), 
 	         React.createElement("div", null, bookmark.Url), 
 	        React.createElement("div", null, " ", tags)
@@ -147,42 +157,27 @@
 
 	    });
 
-	    var users = this.state.userlookup;
 
-	    console.log(users);
-
-	    var usersummaries = Object.keys(users).filter(function(userid){
-	      return Object.keys(users[userid]).length>0;
-	    }).map(function(userid){
-
-	      var user = users[userid];
-	      var summary="";
-	      Object.keys(user).forEach(function(language){
-	        summary = summary + language + "  " + user[language] + "\n";
-	      });
-
-	      return  React.createElement("div", null, React.createElement("h3", null, userid), " ", summary)
-	    });
 
 	    return(
 	      React.createElement("div", null, 
 	        React.createElement("div", {className: "smaller"}, 
-	          fullstring
+	          React.createElement("p", null, React.createElement("label", null, "your bookmarklet url:", React.createElement("input", {type: "text", value: fullstring})))
 	        ), 
 	        React.createElement("div", {className: "smaller"}, 
-	          usersummaries
+	          React.createElement(UserSearch, {userlookup: this.state.userlookup, onsubadded: this.addSub})
 	        ), 
 
-	        bookmarklist
+	        React.createElement("div", {className: "section"}, 
+	          bookmarklist
+	        )
 	      )
 	    )
 	  }
 	});
 
 	ReactDOM.render(
-	  React.createElement(Welcome, {
-	  message: "HEY"}
-	  ),
+	  React.createElement(App, {message: "hey"}),
 	  document.getElementById("content")
 	);
 
@@ -200,8 +195,7 @@
 
 				client.onload=function(e){
 					if (this.status==200){
-						var r = JSON.parse(this.response);
-						resolve(r);
+						resolve(this.response);
 					}else{
 						reject(this.statusText);
 					}
@@ -217,24 +211,41 @@
 
 		};
 
-		var Post = function(uri,tempest){
-			tempest=tempest||"";
+		var Post = function(uri,body,options){
+			body=body||"";
+			options=options||{};
 			var promise = new Promise( function (resolve, reject) {
 				var client = new XMLHttpRequest();
 
+				if (typeof(options.params)==="object"){
+					Object.keys(options.params).forEach(function(key, index){
+
+						if (index===0){
+							uri+="?";
+						}else{
+							uri+="&";
+						}
+						uri+=key+"="+options.params[key];
+					});
+				}
+
+				client.open("POST",uri);
+
+				if (typeof(options.headers)==="object"){
+					Object.keys(options.headers).forEach(function(key){
+						client.setRequestHeader(key,options.headers[key]);
+					});
+				}
+
 				client.onload=function(e){
 					if (this.status==200){
-						var r = JSON.parse(this.response);
-						resolve(r);
+						resolve(this.response);
 					}else{
 						reject(this.statusText);
 					}
-
 				};
 
-				var json = JSON.stringify(tempest);
-				client.open("POST",uri);
-				client.send(json);
+				client.send(body);
 
 			});
 
@@ -19792,6 +19803,76 @@
 	'use strict';
 
 	module.exports = __webpack_require__(4);
+
+
+/***/ },
+/* 159 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM *//** @jsx React.DOM */
+	var React = __webpack_require__(2);
+
+	module.exports = React.createClass({displayName: "module.exports",
+	  getInitialState: function() {
+	    return {tagfilter:""};
+	  },
+	  componentDidMount:function(){
+
+	  },
+	  filterUsers:function(e){
+	    this.setState({tagfilter:e.target.value});
+
+	  },
+	  render:function(){
+
+	    var onsubadded=this.props.onsubadded;
+	    var users = this.props.userlookup;
+	    var tagfilter = this.state.tagfilter.toLowerCase();
+
+	    console.log(users);
+
+	    var allusers = Object.keys(users).filter(function(userid){
+	      return Object.keys(users[userid]).length>0;
+	    });
+
+	    var filteredusers = allusers;
+
+	    if (tagfilter!=""){
+	      filteredusers=filteredusers.filter(function(userid){
+	        var languages = Object.keys(users[userid]);
+	        var matches = languages.filter(function(language){
+	          return language.substr(0,tagfilter.length).toLowerCase()===tagfilter;
+	        });
+	        return matches.length>0;
+	      });
+	    }
+
+	    var usersummaries = filteredusers.map(function(userid){
+
+	      var user = users[userid];
+	      var summary="";
+	      Object.keys(user).forEach(function(language){
+	        summary = summary + language + "  " + user[language] + "\n";
+	      });
+
+	      var addme = function(e){
+	        onsubadded(userid);
+	      };
+
+	      return  React.createElement("div", null, 
+
+	        React.createElement("h3", null, userid), summary, " ", React.createElement("button", {className: "raised", type: "button", onClick: addme}, "subscribe!"), " ")
+	    });
+
+	    return (React.createElement("div", null, 
+	      React.createElement("p", null, React.createElement("label", null, "tag filter: ", React.createElement("input", {onChange: this.filterUsers, type: "text"}))), 
+	      usersummaries
+	    ))
+
+
+	  }
+
+	});
 
 
 /***/ }

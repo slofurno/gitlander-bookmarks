@@ -7,8 +7,7 @@ var httpClient = function httpClient(){
 
 			client.onload=function(e){
 				if (this.status==200){
-					var r = JSON.parse(this.response);
-					resolve(r);
+					resolve(this.response);
 				}else{
 					reject(this.statusText);
 				}
@@ -24,24 +23,41 @@ var httpClient = function httpClient(){
 
 	};
 
-	var Post = function(uri,tempest){
-		tempest=tempest||"";
+	var Post = function(uri,body,options){
+		body=body||"";
+		options=options||{};
 		var promise = new Promise( function (resolve, reject) {
 			var client = new XMLHttpRequest();
 
+			if (typeof(options.params)==="object"){
+				Object.keys(options.params).forEach(function(key, index){
+
+					if (index===0){
+						uri+="?";
+					}else{
+						uri+="&";
+					}
+					uri+=key+"="+options.params[key];
+				});
+			}
+
+			client.open("POST",uri);
+
+			if (typeof(options.headers)==="object"){
+				Object.keys(options.headers).forEach(function(key){
+					client.setRequestHeader(key,options.headers[key]);
+				});
+			}
+
 			client.onload=function(e){
 				if (this.status==200){
-					var r = JSON.parse(this.response);
-					resolve(r);
+					resolve(this.response);
 				}else{
 					reject(this.statusText);
 				}
-
 			};
 
-			var json = JSON.stringify(tempest);
-			client.open("POST",uri);
-			client.send(json);
+			client.send(body);
 
 		});
 

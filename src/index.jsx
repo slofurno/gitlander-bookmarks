@@ -3,10 +3,11 @@
 var HttpClient = require("./httpclient");
 var React = require('react');
 var ReactDOM = require('react-dom');
+var UserSearch = require('./search');
 
 var client = HttpClient();
 
-var Welcome = React.createClass({
+var App = React.createClass({
   getInitialState: function() {
     var hostname=location.hostname;
     if (hostname===""){
@@ -21,27 +22,47 @@ var Welcome = React.createClass({
       userlookup:{}
     };
   },
+  addSub:function(e){
+    console.log(e);
+
+    var options={
+      headers:{Authorization:this.state.user+":"+this.state.token},
+      params:{follow:e}
+    };
+
+    client.post("/api/follow","",options).then(function(result){
+      console.log(result);
+    }).catch(function(err){
+      console.log(err);
+    });
+
+  },
   componentDidMount: function() {
     var self = this;
 
     client.get("/api/user").then(function(result){
-      self.setState({userlookup:result});
+      self.setState({userlookup:JSON.parse(result)});
+    }).catch(function(err){
+      console.log(err);
     });
 
     client.post("/api/user").then(function(result){
-      self.setState(result);
-      console.log(result);
 
-      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
+      var userInfo=JSON.parse(result);
+      self.setState(userInfo);
+      console.log("authorization:",userInfo.user+":"+userInfo.token);
+
+      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+userInfo.user+"&token="+userInfo.token);
 
       ws.onmessage=function(e){
         var update = JSON.parse(e.data);
         var newbookmarks=self.state.bookmarks.slice();
-        //var dd=JSON.parse(update.Url)
-        //dd.Id=update.Id;
+
         console.log(update);
         newbookmarks.push(update);
 
+        //TODO:
+        /*
         var lookup = self.state.userlookup;
         if (typeof lookup[update.Owner]==="undefined"){
           lookup[update.Owner]={};
@@ -55,26 +76,15 @@ var Welcome = React.createClass({
           }
           tags[tag]+=1;
         });
+        */
 
-
-
-/*
-        console.log(updates);
-
-        updates.Bookmarks.forEach(function(update){
-          var dd=JSON.parse(update.Url);
-          //until i fix this, copy the id over
-          dd.Id=update.Id;
-          newbookmarks.push(dd);
-        });
-*/
-        self.setState({bookmarks:newbookmarks,userlookup:lookup});
+        //,userlookup:lookup
+        self.setState({bookmarks:newbookmarks});
       };
+    }).catch(function(err){
+      console.log(err);
     });
-/*
-    console.log(hostname);
 
-    */
 
   },
   render:function(){
@@ -84,7 +94,7 @@ var Welcome = React.createClass({
     var part3='";document.body.removeChild(_tevsel);}})();';
 
     console.log("RENDERING");
-    //http://gitlander.com:555/api/img/?'
+
     var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
 
     var bookmarklist = this.state.bookmarks.map(function(bookmark){
@@ -93,7 +103,7 @@ var Welcome = React.createClass({
       });
 
       console.log("id: ", bookmark.Id);
-      return <div key={bookmark.Id} className="tester raised">
+      return <div key={bookmark.Id} className="bookmark raised">
         <div>{bookmark.Description}</div>
          <div>{bookmark.Url}</div>
         <div> {tags}</div>
@@ -101,41 +111,26 @@ var Welcome = React.createClass({
 
     });
 
-    var users = this.state.userlookup;
 
-    console.log(users);
-
-    var usersummaries = Object.keys(users).filter(function(userid){
-      return Object.keys(users[userid]).length>0;
-    }).map(function(userid){
-
-      var user = users[userid];
-      var summary="";
-      Object.keys(user).forEach(function(language){
-        summary = summary + language + "  " + user[language] + "\n";
-      });
-
-      return  <div><h3>{userid}</h3> {summary}</div>
-    });
 
     return(
       <div>
         <div className="smaller">
-          {fullstring}
+          <p><label>your bookmarklet url:<input type="text" value={fullstring}></input></label></p>
         </div>
         <div className="smaller">
-          {usersummaries}
+          <UserSearch userlookup={this.state.userlookup} onsubadded={this.addSub}></UserSearch>
         </div>
 
-        {bookmarklist}
+        <div className="section">
+          {bookmarklist}
+        </div>
       </div>
     )
   }
 });
 
 ReactDOM.render(
-  <Welcome
-  message="HEY"
-  />,
+  <App message="hey"/>,
   document.getElementById("content")
 );
