@@ -69,6 +69,7 @@ func (c *Collection) Update(key string, value interface{}) {
 
 func (c *Collection) ObserveChanges(callback *Callback) func() {
 
+	//TODO:instead of n calls on subscribe, maybe 1 call with n elements
 	add := func() {
 		for key, el := range c.store {
 			callback.added(key, el)

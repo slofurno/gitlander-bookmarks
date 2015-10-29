@@ -30,7 +30,6 @@ type Bookmark struct {
 }
 
 func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection {
-	//user := &UserConnection{bookmarks: newCollection(), subscriptions: newCollection()}
 
 	self := &UserConnection{subscriptions: userSubs, handles: map[string]func(){}, socket: socket}
 
@@ -45,20 +44,17 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 		}
 
 		added := func(key string, value interface{}) {
-
 			j, err := json.Marshal(value)
-
 			if err != nil {
 				fmt.Println(err.Error())
 				return
 			}
-
 			fmt.Println("sending json:", j)
 			socket.Write(j)
 		}
 
 		changed := func(key string, value interface{}) {
-
+			//
 		}
 
 		removed := func(key string, value interface{}) {
@@ -66,34 +62,22 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 		}
 
 		callback := &Callback{added, changed, removed}
-
 		self.handles[key] = userinfo.bookmarks.ObserveChanges(callback)
 
-		j, err := json.Marshal(value)
-
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
-		fmt.Println("added: ", string(j))
 	}
 
 	subchanged := func(key string, value interface{}) {
-
-		fmt.Println("tevs")
+		fmt.Println("subchanged")
 	}
 
 	subremoved := func(key string, value interface{}) {
-
-		onstop := self.handles[key]
-		onstop()
-		//check if we are subbed to key, if so, dlete from our map + call onstop()
-		fmt.Println("added: ", key)
+		if onstop, ok := self.handles[key]; ok {
+			fmt.Println("unsubbed from: ", key)
+			onstop()
+		}
 	}
 
 	subcallback := &Callback{subadded, subchanged, subremoved}
-
 	self.onstop = userSubs.ObserveChanges(subcallback)
 
 	return self

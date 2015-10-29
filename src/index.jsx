@@ -63,12 +63,16 @@ var Welcome = React.createClass({
     var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
 
     var bookmarklist = this.state.bookmarks.map(function(bookmark){
-      var tags = bookmark.tags.reduce(function(acc,cur){
-        return acc+ " " +cur;
-      },"tags:");
+      var tags = bookmark.tags.map(function(tag,index){
+        return (<div key={index} className="tag"> {tag} </div>)
+      });
 
       console.log("id: ", bookmark.Id);
-      return <div key={bookmark.Id} className="tester raised"> {bookmark.description}  {bookmark.url}  {tags}</div>
+      return <div key={bookmark.Id} className="tester raised">
+        <div>{bookmark.description}</div>
+         <div>{bookmark.url}</div>
+        <div> {tags}</div>
+      </div>
 
     });
 

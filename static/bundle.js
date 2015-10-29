@@ -109,12 +109,16 @@
 	    var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
 
 	    var bookmarklist = this.state.bookmarks.map(function(bookmark){
-	      var tags = bookmark.tags.reduce(function(acc,cur){
-	        return acc+ " " +cur;
-	      },"tags:");
+	      var tags = bookmark.tags.map(function(tag,index){
+	        return (React.createElement("div", {key: index, className: "tag"}, " ", tag, " "))
+	      });
 
 	      console.log("id: ", bookmark.Id);
-	      return React.createElement("div", {key: bookmark.Id, className: "tester raised"}, " ", bookmark.description, "  ", bookmark.url, "  ", tags)
+	      return React.createElement("div", {key: bookmark.Id, className: "tester raised"}, 
+	        React.createElement("div", null, bookmark.description), 
+	         React.createElement("div", null, bookmark.url), 
+	        React.createElement("div", null, " ", tags)
+	      )
 
 	    });
 
