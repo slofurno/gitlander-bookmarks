@@ -41,6 +41,23 @@ func (c *Collection) eventLoop() {
 
 type collectionEvent func()
 
+func (c *Collection) Fetch() []interface{} {
+
+	result := make(chan []interface{}, 1)
+
+	fetch := func() {
+		dump := []interface{}{}
+		for _, value := range c.store {
+			dump = append(dump, value)
+		}
+		result <- dump
+	}
+
+	c.events <- fetch
+	return <-result
+
+}
+
 func (c *Collection) Add(key string, value interface{}) {
 
 	add := func() {

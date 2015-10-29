@@ -59,12 +59,20 @@
 	      hostname="localhost";
 	    }
 
-	    return {user:"sdfsdf", token:"???", bookmarks:[],hostname:hostname};
+	    return {
+	      user:"sdfsdf",
+	      token:"???",
+	      bookmarks:[],
+	      hostname:hostname,
+	      userlookup:{}
+	    };
 	  },
 	  componentDidMount: function() {
 	    var self = this;
 
-
+	    client.get("/api/user").then(function(result){
+	      self.setState({userlookup:result});
+	    });
 
 	    client.post("/api/user").then(function(result){
 	      self.setState(result);
@@ -75,9 +83,26 @@
 	      ws.onmessage=function(e){
 	        var update = JSON.parse(e.data);
 	        var newbookmarks=self.state.bookmarks.slice();
-	        var dd=JSON.parse(update.Url)
-	        dd.Id=update.Id;
-	        newbookmarks.push(dd);
+	        //var dd=JSON.parse(update.Url)
+	        //dd.Id=update.Id;
+	        console.log(update);
+	        newbookmarks.push(update);
+
+	        var lookup = self.state.userlookup;
+	        if (typeof lookup[update.Owner]==="undefined"){
+	          lookup[update.Owner]={};
+	        }
+
+	        var tags = lookup[update.Owner];
+
+	        update.Tags.forEach(function(tag){
+	          if (typeof tags[tag] ==="undefined"){
+	            tags[tag]=0;
+	          }
+	          tags[tag]+=1;
+	        });
+
+
 
 	/*
 	        console.log(updates);
@@ -89,7 +114,7 @@
 	          newbookmarks.push(dd);
 	        });
 	*/
-	        self.setState({bookmarks:newbookmarks});
+	        self.setState({bookmarks:newbookmarks,userlookup:lookup});
 	      };
 	    });
 	/*
@@ -109,17 +134,30 @@
 	    var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
 
 	    var bookmarklist = this.state.bookmarks.map(function(bookmark){
-	      var tags = bookmark.tags.map(function(tag,index){
+	      var tags = bookmark.Tags.map(function(tag,index){
 	        return (React.createElement("div", {key: index, className: "tag"}, " ", tag, " "))
 	      });
 
 	      console.log("id: ", bookmark.Id);
 	      return React.createElement("div", {key: bookmark.Id, className: "tester raised"}, 
-	        React.createElement("div", null, bookmark.description), 
-	         React.createElement("div", null, bookmark.url), 
+	        React.createElement("div", null, bookmark.Description), 
+	         React.createElement("div", null, bookmark.Url), 
 	        React.createElement("div", null, " ", tags)
 	      )
 
+	    });
+
+	    var users = this.state.userlookup;
+
+	    var usersummaries = Object.keys(users).map(function(userid){
+
+	      var user = users[userid];
+	      var summary="";
+	      Object.keys(user).forEach(function(language){
+	        summary = summary + language + "  " + user[language] + "\n";
+	      });
+
+	      return  React.createElement("div", null, React.createElement("h3", null, userid), " ", summary)
 	    });
 
 	    return(
@@ -127,6 +165,10 @@
 	        React.createElement("div", {className: "smaller"}, 
 	          fullstring
 	        ), 
+	        React.createElement("div", {className: "smaller"}, 
+	          usersummaries
+	        ), 
+
 	        bookmarklist
 	      )
 	    )

@@ -12,8 +12,8 @@ import (
 	"strings"
 )
 
-var userSubscriptions = map[string]*Collection{}
-var userBookmarks = map[string]*Collection{}
+//var userSubscriptions = map[string]*Collection{}
+//var userBookmarks = map[string]*Collection{}
 
 var userInfos = map[string]*userInfo{}
 
@@ -23,6 +23,7 @@ var database = newFilebase("test.db")
 type userInfo struct {
 	subscriptions *Collection
 	bookmarks     *Collection
+	summary       map[string]int
 }
 
 type RequestContext struct {
@@ -32,7 +33,7 @@ type RequestContext struct {
 }
 
 func newUserInfo() *userInfo {
-	return &userInfo{subscriptions: newCollection(), bookmarks: newCollection()}
+	return &userInfo{subscriptions: newCollection(), bookmarks: newCollection(), summary: make(map[string]int)}
 }
 
 func makeUuid() string {
@@ -156,7 +157,6 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 
 	sub := r.URL.Query().Get("follow")
 
-	//var other *userInfo
 	var ok bool
 
 	if _, ok = userInfos[sub]; !ok {
@@ -166,8 +166,6 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 	}
 
 	context.userinfo.subscriptions.Add(sub, true)
-
-	//other.AddSub(context.user)
 
 }
 
@@ -204,6 +202,17 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 	case "GET":
 
+		usersummaries := map[string]map[string]int{}
+		//userids := []string{}
+		for key, userinfo := range userInfos {
+			usersummaries[key] = userinfo.summary
+			//userids = append(userids, key)
+		}
+
+		j, _ := json.Marshal(usersummaries)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(j)
+		return
 	}
 
 }
@@ -216,18 +225,53 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 
 	case "POST":
 		b, _ := ioutil.ReadAll(r.Body)
-		body := string(b)
-		fmt.Println(body)
+
+		br := &BookmarkRequest{}
+		err := json.Unmarshal(b, br)
+
+		if err != nil {
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+
+		//body := string(b)
+		//fmt.Println(body)
 		if !context.isAuthed {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		bookmark := &Bookmark{Id: makeUuid(), Url: body, Owner: context.userid}
+		bookmark := &Bookmark{
+			Id:          makeUuid(),
+			Url:         br.Url,
+			Description: br.Description,
+			Tags:        br.Tags,
+			Owner:       context.userid,
+		}
+
+		for _, tag := range br.Tags {
+			context.userinfo.summary[tag] += 1
+		}
+
 		context.userinfo.bookmarks.Add(bookmark.Id, bookmark)
 		fmt.Fprintln(w, bookmark.Id)
 
 	case "GET":
+		userid := r.URL.Query().Get("id")
+
+		if userid == "" {
+			return
+		}
+
+		if user, ok := userInfos[userid]; ok {
+
+			bookmarks := user.bookmarks.Fetch()
+			j, _ := json.Marshal(bookmarks)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(j)
+			return
+		}
+
 		//w.Write(<-context.user.GetBookmarks())
 	}
 

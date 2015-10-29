@@ -6,9 +6,13 @@ import (
 )
 
 type BookmarkRequest struct {
-	User string `json:"user"`
-	Url  string
-	Tags []string
+	//User        string   `json:"user"`
+	Url         string   `json:"url"`
+	Tags        []string `json:"tags"`
+	Description string   `json:"description"`
+}
+
+type UserSummary struct {
 }
 
 type User struct {
@@ -24,9 +28,11 @@ type UserConnection struct {
 }
 
 type Bookmark struct {
-	Id    string
-	Owner string
-	Url   string
+	Id          string
+	Owner       string
+	Url         string
+	Description string
+	Tags        []string
 }
 
 func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection {
