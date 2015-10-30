@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+//TODO:pls think of a better way to do this
 type Filebase struct {
 	Fd    *os.File
 	Inbox chan []byte

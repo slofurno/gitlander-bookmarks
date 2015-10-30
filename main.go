@@ -13,9 +13,6 @@ import (
 	"strings"
 )
 
-//var userSubscriptions = map[string]*Collection{}
-//var userBookmarks = map[string]*Collection{}
-
 var userInfos = map[string]*userInfo{}
 
 var secretKey []byte
@@ -82,10 +79,9 @@ func init() {
 			dataStore.AddSubscription(userinfo, du.Sub)
 		}
 
-		//fmt.Println(du)
-
 	}
 
+	//TODO: idk; by reusing the same datastore functions, we were rewriting everything we read
 	database.Pls = true
 
 }
@@ -93,7 +89,6 @@ func init() {
 func main() {
 
 	http.HandleFunc("/api/img/", authed(imgHandler))
-	//http.HandleFunc("/api/img", imgHandler)
 	http.HandleFunc("/ws", authed(websocketHandler))
 	http.HandleFunc("/api/follow", authed(subscriptionHandler))
 	http.HandleFunc("/api/bookmarks", authed(bookmarkHandler))
@@ -140,7 +135,6 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 					context.userinfo = user
 					context.userinfo.userid = userid
 					fmt.Println("user authed as: ", userid)
-					//          w.WriteHeader(http.StatusForbidden)
 				}
 			}
 		}
@@ -223,8 +217,6 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 	}
 
 	dataStore.AddSubscription(context.userinfo, sub)
-	//context.userinfo.subscriptions.Add(sub, true)
-
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
@@ -261,10 +253,8 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 
 		usersummaries := map[string]map[string]int{}
-		//userids := []string{}
 		for key, userinfo := range userInfos {
 			usersummaries[key] = userinfo.summary
-			//userids = append(userids, key)
 		}
 
 		j, _ := json.Marshal(usersummaries)
@@ -292,8 +282,6 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			return
 		}
 
-		//body := string(b)
-		//fmt.Println(body)
 		if !context.isAuthed {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -326,7 +314,6 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			return
 		}
 
-		//w.Write(<-context.user.GetBookmarks())
 	}
 
 }

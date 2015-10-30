@@ -12,9 +12,6 @@ type BookmarkRequest struct {
 	Description string   `json:"description"`
 }
 
-type UserSummary struct {
-}
-
 type User struct {
 	Id string
 }
