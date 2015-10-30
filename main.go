@@ -51,6 +51,7 @@ func init() {
 	}
 
 	scanner := bufio.NewScanner(database.Fd)
+	scanner.Split(bufio.ScanLines)
 
 	for scanner.Scan() {
 		du := &DataUnion{}
@@ -59,6 +60,8 @@ func init() {
 
 		if err != nil {
 			fmt.Println(err.Error())
+			fmt.Println("bad json:", string(b))
+			continue
 		}
 
 		var userinfo *userInfo
@@ -82,6 +85,8 @@ func init() {
 		//fmt.Println(du)
 
 	}
+
+	database.Pls = true
 
 }
 

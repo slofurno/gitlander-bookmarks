@@ -8,6 +8,7 @@ import (
 type Filebase struct {
 	Fd    *os.File
 	Inbox chan []byte
+	Pls   bool
 }
 
 type entry struct {
@@ -48,5 +49,8 @@ func (db *Filebase) initWorker() {
 }
 
 func (db *Filebase) WriteRecord(b []byte) {
+	if !db.Pls {
+		return
+	}
 	db.Inbox <- b
 }

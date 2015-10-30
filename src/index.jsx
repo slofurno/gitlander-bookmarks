@@ -7,16 +7,20 @@ var UserSearch = require('./search');
 
 var client = HttpClient();
 
+var storedid = localStorage.getItem("userid");
+var storedtoken = localStorage.getItem("token");
+
 var App = React.createClass({
   getInitialState: function() {
+    console.log("getInitialState");
     var hostname=location.hostname;
     if (hostname===""){
       hostname="localhost";
     }
 
     return {
-      user:"sdfsdf",
-      token:"???",
+      user:storedid,
+      token:storedtoken,
       bookmarks:[],
       hostname:hostname,
       userlookup:{}
@@ -38,6 +42,7 @@ var App = React.createClass({
 
   },
   componentDidMount: function() {
+    console.log("componentDidMount");
     var self = this;
 
     client.get("/api/user").then(function(result){
@@ -46,14 +51,23 @@ var App = React.createClass({
       console.log(err);
     });
 
-    client.post("/api/user").then(function(result){
+    var getToken;
 
-      var userInfo=JSON.parse(result);
-      self.setState(userInfo);
-      console.log("authorization:",userInfo.user+":"+userInfo.token);
+    if (storedtoken===null||storedid===null){
+      getToken = client.post("/api/user").then(function(result){
+        return JSON.parse(result);
+      });
+    }else{
+      getToken = Promise.resolve({user:storedid,token:storedtoken});
+    }
 
-      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+userInfo.user+"&token="+userInfo.token);
+    getToken.then(function(result){
+      self.setState(result);
+      localStorage.setItem("userid",result.user);
+      localStorage.setItem("token",result.token);
 
+      console.log("logging in as:", result.user+":"+result.token);
+      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
       ws.onmessage=function(e){
         var update = JSON.parse(e.data);
         var newbookmarks=self.state.bookmarks.slice();
@@ -81,8 +95,9 @@ var App = React.createClass({
         //,userlookup:lookup
         self.setState({bookmarks:newbookmarks});
       };
+
     }).catch(function(err){
-      console.log(err);
+      console.error(err);
     });
 
 
