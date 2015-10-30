@@ -19848,20 +19848,58 @@
 	    }
 
 	    var usersummaries = filteredusers.map(function(userid){
+	      console.log("userid",userid);
 
 	      var user = users[userid];
-	      var summary="";
-	      Object.keys(user).forEach(function(language){
+
+	      var languages=Object.keys(user);
+
+	      var max=0;
+
+	      languages.map(function(language){
+	        return user[language];
+	      }).forEach(function(cur){
+	        if (cur>max){
+	          max=cur;
+	        }
+	      });
+
+	/*
+	      languages.forEach(function(language){
 	        summary = summary + language + "  " + user[language] + "\n";
+	      });
+	*/
+
+	      var bars = languages.map(function(language){
+	        var count = user[language];
+	        var scale= (count/max)*250|0;
+
+	        var width=scale+"px";
+
+	        var style={
+	            width:width
+	        };
+
+	        return React.createElement("div", {className: "bargraph", style: style}, language)
+
 	      });
 
 	      var addme = function(e){
 	        onsubadded(userid);
 	      };
 
-	      return  React.createElement("div", null, 
+	      return(
+	      React.createElement("div", {className: "wrap-bar raised", key: userid}, 
+	        React.createElement("div", {className: "raised bookmark"}, 
+	          React.createElement("button", {className: "raised float-right", type: "button", onClick: addme}, "subscribe!"), 
+	          React.createElement("div", {style: {"padding":"1em 0"}}, 
+	            "user_name@gmail.com"
+	          ), 
 
-	        React.createElement("h3", null, userid), summary, " ", React.createElement("button", {className: "raised", type: "button", onClick: addme}, "subscribe!"), " ")
+	          bars
+
+	        )
+	      ))
 	    });
 
 	    return (

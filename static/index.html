@@ -23,12 +23,12 @@ body{
 }
 
 .bookmark{
+  vertical-align: top;
   display:inline-block;
   background-color:cornflowerblue;
   color:ghostwhite;
   padding: 0.4em 0.6em;
-  margin: 0.2em 0.4em 0.2em 0;
-  min-width: 6em;
+  min-height:100%;
 }
 
 button{
@@ -70,7 +70,6 @@ input{
   display:inline-block;
   background-color:ghostwhite;
   color:lightslategray;
-  font-size:0.8em;
   line-height:1.2em;
   padding: 0.4em 0.5em;
   margin: 0.2em 0.4em 0.2em 0;
@@ -78,8 +77,9 @@ input{
 
 
 .container{
+  font-size: 0.8em;
   position:relative;
-  width:800px;
+  max-width:1000px;
   padding:15px;
   margin: auto;
   height:100%;
@@ -87,16 +87,42 @@ input{
   background-color:ghostwhite;
 }
 
+.wrap-bar{
+  vertical-align: top;
+  padding:0;
+  margin:0;
+  overflow-y: hidden;
+  height:100px;
+  display:inline-block;
+  margin: 0.2em 0.4em 0.2em 0;
+
+}
+
+.wrap-bar:hover{
+  vertical-align: top;
+  overflow-y: visible;
+  z-index: 5;
+}
+
 .section{
   margin:1em 0;
 }
 
 .raised{
-  box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.16), 0px 0px 2px 0px rgba(0, 0, 0, 0.12);
+  box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.26), 0px 0px 2px 0px rgba(0, 0, 0, 0.22);
+}
+
+.bargraph{
+  background-color:lightslategray;
+  margin:2px 0 0 0;
+  padding:2px;
+}
+
+.float-right{
+  float:right;
 }
 
 .smaller{
-  font-size:0.8em;
 }
 </style>
 </head>
