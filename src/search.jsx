@@ -53,7 +53,8 @@ module.exports = React.createClass({
         <h3>{userid}</h3>{summary} <button className="raised" type="button" onClick={addme}>subscribe!</button> </div>
     });
 
-    return (<div>
+    return (
+     <div>
       <p><label>tag filter: <input onChange={this.filterUsers} type="text"/></label></p>
       {usersummaries}
     </div>)

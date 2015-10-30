@@ -105,7 +105,7 @@ var App = React.createClass({
       console.log("id: ", bookmark.Id);
       return <div key={bookmark.Id} className="bookmark raised">
         <div>{bookmark.Description}</div>
-         <div>{bookmark.Url}</div>
+        <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
         <div> {tags}</div>
       </div>
 

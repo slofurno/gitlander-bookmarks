@@ -151,7 +151,7 @@
 	      console.log("id: ", bookmark.Id);
 	      return React.createElement("div", {key: bookmark.Id, className: "bookmark raised"}, 
 	        React.createElement("div", null, bookmark.Description), 
-	         React.createElement("div", null, bookmark.Url), 
+	        React.createElement("div", {className: "smaller"}, React.createElement("a", {href: bookmark.Url}, bookmark.Url)), 
 	        React.createElement("div", null, " ", tags)
 	      )
 
@@ -19864,7 +19864,8 @@
 	        React.createElement("h3", null, userid), summary, " ", React.createElement("button", {className: "raised", type: "button", onClick: addme}, "subscribe!"), " ")
 	    });
 
-	    return (React.createElement("div", null, 
+	    return (
+	     React.createElement("div", null, 
 	      React.createElement("p", null, React.createElement("label", null, "tag filter: ", React.createElement("input", {onChange: this.filterUsers, type: "text"}))), 
 	      usersummaries
 	    ))
