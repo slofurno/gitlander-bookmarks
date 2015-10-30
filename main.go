@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base32"
@@ -19,17 +20,18 @@ var userInfos = map[string]*userInfo{}
 
 var secretKey []byte
 var database = newFilebase("test.db")
+var dataStore = &DataStore{}
 
 type userInfo struct {
 	subscriptions *Collection
 	bookmarks     *Collection
 	summary       map[string]int
+	userid        string
 }
 
 type RequestContext struct {
 	isAuthed bool
 	userinfo *userInfo
-	userid   string
 }
 
 func newUserInfo() *userInfo {
@@ -47,6 +49,40 @@ func init() {
 	if err != nil {
 		panic("i need the secret key")
 	}
+
+	scanner := bufio.NewScanner(database.Fd)
+
+	for scanner.Scan() {
+		du := &DataUnion{}
+		b := scanner.Bytes()
+		err := json.Unmarshal(b, du)
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		var userinfo *userInfo
+		var ok bool
+		userid := du.UserId
+
+		if userinfo, ok = userInfos[userid]; !ok {
+			userinfo = newUserInfo()
+			userinfo.userid = du.UserId
+			fmt.Println("regen user", userinfo.userid)
+			userinfo.subscriptions.Add(userid, userid)
+			userInfos[userid] = userinfo
+		}
+
+		if du.Bookmark != nil {
+			dataStore.AddBookmark(userinfo, du.Bookmark)
+		} else {
+			dataStore.AddSubscription(userinfo, du.Sub)
+		}
+
+		//fmt.Println(du)
+
+	}
+
 }
 
 func main() {
@@ -97,7 +133,7 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 				if hmac.Equal(expected, tb) {
 					context.isAuthed = true
 					context.userinfo = user
-					context.userid = userid
+					context.userinfo.userid = userid
 					fmt.Println("user authed as: ", userid)
 					//          w.WriteHeader(http.StatusForbidden)
 				}
@@ -131,14 +167,10 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 		Url:         br.Url,
 		Description: br.Description,
 		Tags:        br.Tags,
-		Owner:       context.userid,
+		Owner:       context.userinfo.userid,
 	}
 
-	for _, tag := range br.Tags {
-		context.userinfo.summary[tag] += 1
-	}
-
-	context.userinfo.bookmarks.Add(bookmark.Id, bookmark)
+	dataStore.AddBookmark(context.userinfo, bookmark)
 	fmt.Fprintln(w, bookmark.Id)
 }
 
@@ -185,7 +217,8 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 		return
 	}
 
-	context.userinfo.subscriptions.Add(sub, true)
+	dataStore.AddSubscription(context.userinfo, sub)
+	//context.userinfo.subscriptions.Add(sub, true)
 
 }
 
@@ -266,14 +299,10 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			Url:         br.Url,
 			Description: br.Description,
 			Tags:        br.Tags,
-			Owner:       context.userid,
+			Owner:       context.userinfo.userid,
 		}
 
-		for _, tag := range br.Tags {
-			context.userinfo.summary[tag] += 1
-		}
-
-		context.userinfo.bookmarks.Add(bookmark.Id, bookmark)
+		dataStore.AddBookmark(context.userinfo, bookmark)
 		fmt.Fprintln(w, bookmark.Id)
 
 	case "GET":

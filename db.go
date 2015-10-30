@@ -1,16 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 )
 
 type Filebase struct {
-	Fd      *os.File
-	Inbox   chan []byte
-	writer  *bufio.Writer
-	scanner *bufio.Scanner
+	Fd    *os.File
+	Inbox chan []byte
 }
 
 type entry struct {
@@ -30,24 +27,26 @@ func newFilebase(filename string) *Filebase {
 		Inbox: make(chan []byte, 1024),
 	}
 
-	scanner := bufio.NewScanner(db.Fd)
-	writer := bufio.NewWriter(db.Fd)
-
-	db.scanner = scanner
-	db.writer = writer
-
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
-
-	fmt.Fprintln(writer, "lets add a line")
-	fmt.Fprintln(writer, "lets add a line2")
-
-	writer.Flush()
-
+	db.initWorker()
 	return db
 }
 
-func (db *Filebase) AddUser(user *User) {
+func (db *Filebase) initWorker() {
+	go func() {
+		defer db.Fd.Close()
 
+		for {
+			record := <-db.Inbox
+			_, err := db.Fd.Write(record)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			db.Fd.Write([]byte("\n"))
+		}
+
+	}()
+}
+
+func (db *Filebase) WriteRecord(b []byte) {
+	db.Inbox <- b
 }
