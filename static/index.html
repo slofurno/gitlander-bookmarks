@@ -3,39 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="//code.cdn.mozilla.net/fonts/fira.css">
 <style>
 
 *{
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  font-family: 'Inconsolata', ;
+  font-family: "Fira Mono";
 
 }
 
 a{
-  color:ghostwhite;
+  color:hsl(220, 14%, 71%);
 }
 
 body{
   font-size:100%;
+  color:hsl(220, 14%, 71%);
 }
 
 .bookmark{
   vertical-align: top;
   display:inline-block;
-  background-color:cornflowerblue;
-  color:ghostwhite;
+  background-color:rgb(51, 56, 66);
+  color:hsl(220, 14%, 71%);
   padding: 0.4em 0.6em;
   min-height:100%;
+  width:100%;
+  border: 1px solid rgb(24, 26, 31);
+}
+.bookmark:hover{
 }
 
 button{
   border:0;
   font-size: 1.0em;
   color:ghostwhite;
-  background-color: cornflowerblue;
+  background-color: hsl(220,100%,66%);
   padding:0.8em 0.6em;
   outline: none;
   cursor: pointer;
@@ -64,12 +69,16 @@ input{
   padding:0.4em 0.6em;
   margin:0.2em 0.2em;
   width:100%;
+  color:hsl(220, 14%, 71%);
+  background-color: hsl(220,13%,18%);
+  border:1px solid rgb(24, 26, 31);
+
 }
 
 .tag{
   display:inline-block;
   background-color:ghostwhite;
-  color:lightslategray;
+  color:hsl( 95, 38%, 62%);
   line-height:1.2em;
   padding: 0.4em 0.5em;
   margin: 0.2em 0.4em 0.2em 0;
@@ -84,10 +93,11 @@ input{
   margin: auto;
   height:100%;
   min-height:600px;
-  background-color:ghostwhite;
+  background-color:hsl(220,13%,18%);
 }
 
 .wrap-bar{
+  position:relative;
   vertical-align: top;
   padding:0;
   margin:0;
@@ -113,9 +123,11 @@ input{
 }
 
 .bargraph{
-  background-color:lightslategray;
+  background-color:hsl(220,13%,18%);
   margin:2px 0 0 0;
   padding:2px;
+  border:1px solid rgb(24, 26, 31);
+  color:hsl(220, 14%, 71%);
 }
 
 .float-right{

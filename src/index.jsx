@@ -4,6 +4,7 @@ var HttpClient = require("./httpclient");
 var React = require('react');
 var ReactDOM = require('react-dom');
 var UserSearch = require('./search');
+var Bookmarks = require("./bookmarks")
 
 var client = HttpClient();
 
@@ -112,22 +113,6 @@ var App = React.createClass({
 
     var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
 
-    var bookmarklist = this.state.bookmarks.map(function(bookmark){
-      var tags = bookmark.Tags.map(function(tag,index){
-        return (<div key={index} className="tag"> {tag} </div>)
-      });
-
-      console.log("id: ", bookmark.Id);
-      return <div key={bookmark.Id} className="bookmark raised">
-        <div>{bookmark.Description}</div>
-        <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
-        <div> {tags}</div>
-      </div>
-
-    });
-
-
-
     return(
       <div>
         <div className="smaller">
@@ -138,7 +123,7 @@ var App = React.createClass({
         </div>
 
         <div className="section">
-          {bookmarklist}
+          <Bookmarks bookmarks={this.state.bookmarks}></Bookmarks>
         </div>
       </div>
     )
