@@ -3,8 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="//code.cdn.mozilla.net/fonts/fira.css">
 <style>
+
+@font-face{
+    font-family: 'Fira Mono';
+    src: url('eot/FiraMono-Regular.eot');
+    src: local('Fira Mono'),
+         url('eot/FiraMono-Regular.eot') format('embedded-opentype'),
+         url('woff/FiraMono-Regular.woff') format('woff'),
+         url('ttf/FiraMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
 
 *{
   -webkit-box-sizing: border-box;
@@ -32,8 +42,6 @@ body{
   min-height:100%;
   width:100%;
   border: 1px solid rgb(24, 26, 31);
-}
-.bookmark:hover{
 }
 
 button{
@@ -66,12 +74,12 @@ button:active{
 }
 
 input{
-  padding:0.4em 0.6em;
+  padding:0.8em 0.6em;
   margin:0.2em 0.2em;
   width:100%;
   color:hsl(220, 14%, 71%);
   background-color: hsl(220,13%,18%);
-  border:1px solid rgb(24, 26, 31);
+  border:1px solid rgb(51, 56, 66);
 
 }
 
