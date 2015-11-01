@@ -7,7 +7,7 @@ type Callback struct {
 }
 
 type Cursor interface {
-	fetch() []interface{}
+	fetch2() []interface{}
 }
 
 type Collection struct {
