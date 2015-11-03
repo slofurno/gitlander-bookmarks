@@ -4,11 +4,11 @@ var HttpClient = require("./httpclient");
 var React = require('react');
 var ReactDOM = require('react-dom');
 var UserSearch = require('./search');
-var Bookmarks = require("./bookmarks")
+var Bookmarks = require("./bookmarks");
 
 var client = HttpClient();
 
-var storedid = localStorage.getItem("userid");
+var storedid = null;//localStorage.getItem("userid");
 var storedtoken = localStorage.getItem("token");
 
 var App = React.createClass({

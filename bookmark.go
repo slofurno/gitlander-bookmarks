@@ -3,7 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
+
+func getCurrentTime() int64 {
+	nanos := time.Now().UnixNano()
+	return nanos / 1000000
+}
 
 type BookmarkRequest struct {
 	//User        string   `json:"user"`
@@ -30,6 +36,8 @@ type Bookmark struct {
 	Url         string
 	Description string
 	Tags        []string
+	Summary     string
+	Time        int64
 }
 
 func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection {

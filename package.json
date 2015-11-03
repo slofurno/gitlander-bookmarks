@@ -9,7 +9,8 @@
   "author": "slofurno",
   "license": "GPL-2.0",
   "dependencies": {
-    "react": "^0.14.0",
+    "cheerio": "^0.19.0",
+    "react": "^0.14.2",
     "react-dom": "^0.14.0"
   },
   "devDependencies": {

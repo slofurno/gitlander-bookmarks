@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base32"
@@ -161,12 +162,33 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 		return
 	}
 
+	buf := []byte(br.Url)
+	//resp, err := http.NewRequest("POST", "localhost:8765", bytes.NewBuffer(buf))
+
+	resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
+
+	defer resp.Body.Close()
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	content, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
 	bookmark := &Bookmark{
 		Id:          makeUuid(),
 		Url:         br.Url,
 		Description: br.Description,
 		Tags:        br.Tags,
 		Owner:       context.userinfo.userid,
+		Time:        getCurrentTime(),
+		Summary:     string(content),
 	}
 
 	dataStore.AddBookmark(context.userinfo, bookmark)
