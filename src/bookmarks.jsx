@@ -12,6 +12,37 @@ module.exports = React.createClass({
   },
   render:function(){
 
+    var self = this;
+
+    var bookmarklist = this.props.bookmarks.map(function(bookmark){
+
+      var owner = bookmark.Owner;
+
+      console.log(self.props.user, owner);
+      if (owner===self.props.user){
+        owner = "you";
+      }
+
+      var tags = bookmark.Tags.map(function(tag,index){
+        return (<div key={index} className="tag"> {tag} </div>)
+      });
+
+      console.log("id: ", bookmark.Id);
+      return <div key={bookmark.Id} className="bookmark raised" style={{width:"360px", margin:"0 2px 2px 0", padding:"1em"}}>
+      <div style={{height:"20em", overflowY:"hidden"}}>
+        <h2>{bookmark.Description}</h2>
+        <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
+        <div>{bookmark.Summary}</div>
+      </div>
+        <div> {tags} <div style={{float:"right",padding:"1em 0 0 0"}}>{owner}</div> </div>
+
+      </div>
+    });
+    return <div>{bookmarklist}</div>
+
+
+
+    /*
     var bookmarks = {};
 
     this.props.bookmarks.forEach(function(bookmark){
@@ -33,21 +64,9 @@ module.exports = React.createClass({
     });
 
     return <div>{asdf}</div>
-    /*
-    var bookmarklist = this.props.bookmarks.map(function(bookmark){
-      var tags = bookmark.Tags.map(function(tag,index){
-        return (<div key={index} className="tag"> {tag} </div>)
-      });
+*/
 
-      console.log("id: ", bookmark.Id);
-      return <div key={bookmark.Id} className="bookmark raised">
-        <div>{bookmark.Description}</div>
-        <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
-        <div> {tags}</div>
-      </div>
-    });
-    return <div>{bookmarklist}</div>
-    */
+
 
 
   }
