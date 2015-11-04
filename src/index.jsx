@@ -146,6 +146,13 @@ var App = React.createClass({
     var currentFilter = this.state.tagfilter.toLowerCase();
     var bookmarks = this.state.bookmarks;
 
+
+    var githublogin = "";
+    if (this.state.user===null){
+      githublogin = <a href="https://github.com/login/oauth/authorize?client_id=f584faa0641263aab644">{"login through github"}</a>
+    }
+
+
     if (currentFilter.length>0){
       bookmarks = bookmarks.filter(function(bookmark){
         var matches = bookmark.Tags.map(x=>x.toLowerCase()).filter(x=>x.indexOf(currentFilter)===0);
@@ -165,6 +172,7 @@ var App = React.createClass({
 
     return(
       <div>
+        {githublogin}
         <div className="smaller">
           <p><label>your bookmarklet url:<input type="text" value={fullstring}></input></label></p>
         </div>
