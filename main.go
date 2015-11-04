@@ -37,7 +37,6 @@ type userInfo struct {
 	summary       map[string]int
 	userid        string
 	name          string
-	token         string
 }
 
 type userinfoDto struct {
@@ -331,15 +330,15 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Println("github user:", github_user)
-
 		userid := strconv.FormatUint(github_user.Id, 10)
-		usertoken := makeUuid()
+
 		userinfo := newUserInfo()
-		userinfo.token = usertoken
 		userinfo.userid = userid
+
+		usertoken := makeUuid()
 		userinfo.name = github_user.Login
 
-		dataStore.AddUser(userinfo)
+		dataStore.AddUser(userinfo, usertoken)
 
 		mac := hmac.New(sha256.New, secretKey)
 

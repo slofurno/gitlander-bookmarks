@@ -37,15 +37,18 @@ func (s *DataStore) AddBookmark(userinfo *userInfo, bookmark *Bookmark) {
 
 }
 
-func (s *DataStore) AddUser(userinfo *userInfo) {
+func (s *DataStore) AddUser(userinfo *userInfo, token string) {
 
-	userinfo.subscriptions.Add(userinfo.userid, userinfo.name)
-	userTokens[userinfo.token] = userinfo.userid
-	userInfos[userinfo.userid] = userinfo
+	if _, ok := userInfos[userinfo.userid]; !ok {
+		userinfo.subscriptions.Add(userinfo.userid, userinfo.name)
+		userInfos[userinfo.userid] = userinfo
+	}
+
+	userTokens[token] = userinfo.userid
 
 	data := &DataUnion{
 		UserId: userinfo.userid,
-		Token:  userinfo.token,
+		Token:  token,
 		Name:   userinfo.name,
 	}
 
