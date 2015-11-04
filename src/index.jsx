@@ -116,7 +116,7 @@ var App = React.createClass({
 
     if (currentFilter.length>0){
       bookmarks = bookmarks.filter(function(bookmark){
-        var matches = bookmark.Tags.filter(x=>x.indexOf(currentFilter)>=0);
+        var matches = bookmark.Tags.map(x=>x.toLowerCase()).filter(x=>x.indexOf(currentFilter)===0);
         return matches.length>0;
       });
     }

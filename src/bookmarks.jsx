@@ -18,6 +18,22 @@ module.exports = React.createClass({
 
       var owner = bookmark.Owner;
 
+      var millis = Date.now() - bookmark.Time;
+      var seconds = millis/1000;
+      var minutes = seconds/60;
+      minutes = minutes|0;
+
+      var agemessage = "";
+
+      if (minutes>90){
+        var hours = (minutes/60 + 0.5)|0;
+        agemessage = hours + " hours ago";
+      }else if (minutes > 0){
+        agemessage = minutes + " minutes ago";
+      }else{
+        agemessage = "just now";
+      }
+
       console.log(self.props.user, owner);
       if (owner===self.props.user){
         owner = "you";
@@ -34,7 +50,7 @@ module.exports = React.createClass({
         <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
         <div>{bookmark.Summary}</div>
       </div>
-        <div> {tags} <div style={{float:"right",padding:"1em 0 0 0"}}>{owner}</div> </div>
+        <div> {tags} {agemessage }<div style={{float:"right",padding:"1em 0 0 0"}}>{owner}</div> </div>
 
       </div>
     });
