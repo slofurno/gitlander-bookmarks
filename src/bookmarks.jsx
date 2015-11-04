@@ -37,6 +37,8 @@ module.exports = React.createClass({
       console.log(self.props.user, owner);
       if (owner===self.props.user){
         owner = "you";
+      }else{
+        owner = self.props.usernamelookup[owner];
       }
 
       var tags = bookmark.Tags.map(function(tag,index){

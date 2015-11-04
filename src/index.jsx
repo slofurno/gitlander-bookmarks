@@ -41,20 +41,19 @@ var App = React.createClass({
       bookmarks:[],
       hostname:hostname,
       userlookup:{},
+      usernamelookup:{},
       tagfilter:"",
       userid:accountid
     };
   },
   addSub:function(e){
-    console.log(e);
-
     var options={
       headers:{Authorization:this.state.user+":"+this.state.token},
       params:{follow:e}
     };
 
     client.post("/api/follow","",options).then(function(result){
-      console.log(result);
+      console.log("followed", result);
     }).catch(function(err){
       console.log(err);
     });
@@ -65,7 +64,17 @@ var App = React.createClass({
     var self = this;
 
     client.get("/api/user").then(function(result){
-      self.setState({userlookup:JSON.parse(result)});
+
+      var userlookup = JSON.parse(result);
+      var summarylookup = {};
+      var namelookup = {};
+
+      Object.keys(userlookup).forEach(function(userid){
+        summarylookup[userid]=userlookup[userid].Summary;
+        namelookup[userid] = userlookup[userid].Name;
+      });
+
+      self.setState({userlookup:summarylookup, usernamelookup:namelookup});
     }).catch(function(err){
       console.log(err);
     });
@@ -107,30 +116,19 @@ var App = React.createClass({
       var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
       ws.onmessage=function(e){
         var update = JSON.parse(e.data);
-        var newbookmarks=self.state.bookmarks.slice();
+        console.log("update rec", update);
 
-        console.log(update);
-        newbookmarks.push(update);
+        if (typeof(update.Name)==="undefined"){
+          var newbookmarks=self.state.bookmarks.slice();
+          newbookmarks.push(update);
+          self.setState({bookmarks:newbookmarks});
 
-        //TODO:
-        /*
-        var lookup = self.state.userlookup;
-        if (typeof lookup[update.Owner]==="undefined"){
-          lookup[update.Owner]={};
+        }else{
+          var usernamelookup = self.state.usernamelookup;
+          usernamelookup[update.Userid]=update.Name;
+          self.setState({usernamelookup:usernamelookup});
         }
 
-        var tags = lookup[update.Owner];
-
-        update.Tags.forEach(function(tag){
-          if (typeof tags[tag] ==="undefined"){
-            tags[tag]=0;
-          }
-          tags[tag]+=1;
-        });
-        */
-
-        //,userlookup:lookup
-        self.setState({bookmarks:newbookmarks});
       };
 
     }).catch(function(err){
@@ -171,7 +169,7 @@ var App = React.createClass({
           <p><label>your bookmarklet url:<input type="text" value={fullstring}></input></label></p>
         </div>
         <div className="smaller">
-          <UserSearch userlookup={this.state.userlookup} onsubadded={this.addSub}></UserSearch>
+          <UserSearch userlookup={this.state.userlookup} usernamelookup={this.state.usernamelookup} onsubadded={this.addSub}></UserSearch>
         </div>
 
         <div className="section">
@@ -180,7 +178,7 @@ var App = React.createClass({
         </div>
 
         <div className="section">
-          <Bookmarks bookmarks={bookmarks} user={this.state.userid}></Bookmarks>
+          <Bookmarks bookmarks={bookmarks} usernamelookup={this.state.usernamelookup} user={this.state.userid}></Bookmarks>
         </div>
       </div>
     )

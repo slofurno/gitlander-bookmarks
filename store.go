@@ -39,7 +39,7 @@ func (s *DataStore) AddBookmark(userinfo *userInfo, bookmark *Bookmark) {
 
 func (s *DataStore) AddUser(userinfo *userInfo) {
 
-	userinfo.subscriptions.Add(userinfo.userid, userinfo.userid)
+	userinfo.subscriptions.Add(userinfo.userid, userinfo.name)
 	userTokens[userinfo.token] = userinfo.userid
 	userInfos[userinfo.userid] = userinfo
 
@@ -57,9 +57,10 @@ func (s *DataStore) AddUser(userinfo *userInfo) {
 
 }
 
-func (s *DataStore) AddSubscription(userinfo *userInfo, sub string) {
+//TODO: prolly need a real type instead of storing sub name
+func (s *DataStore) AddSubscription(userinfo *userInfo, sub string, name string) {
 
-	userinfo.subscriptions.Add(sub, true)
+	userinfo.subscriptions.Add(sub, name)
 
 	data := &DataUnion{
 		UserId: userinfo.userid,

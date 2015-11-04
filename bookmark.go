@@ -61,8 +61,21 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 			return
 		}
 
+		tevs := &userinfoDto{Name: userinfo.name, Userid: key}
+
+		jj, _ := json.Marshal(tevs)
+		socket.Write(jj)
+
 		added := func(key string, value interface{}) {
-			j, err := json.Marshal(value)
+
+			bookmark, ok := value.(*Bookmark)
+
+			if !ok {
+				fmt.Println("how is this not a bookmark?")
+				return
+			}
+
+			j, err := json.Marshal(bookmark)
 			if err != nil {
 				fmt.Println(err.Error())
 				return

@@ -40,6 +40,12 @@ type userInfo struct {
 	token         string
 }
 
+type userinfoDto struct {
+	Summary map[string]int
+	Name    string
+	Userid  string
+}
+
 type RequestContext struct {
 	isAuthed bool
 	userinfo *userInfo
@@ -106,7 +112,7 @@ func init() {
 		if du.Bookmark != nil {
 			dataStore.AddBookmark(userinfo, du.Bookmark)
 		} else if du.Sub != "" {
-			dataStore.AddSubscription(userinfo, du.Sub)
+			dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
 		} else {
 			userTokens[du.Token] = du.UserId
 			userinfo.name = du.Name
@@ -269,14 +275,15 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 	sub := r.URL.Query().Get("follow")
 
 	var ok bool
+	var subinfo *userInfo
 
-	if _, ok = userInfos[sub]; !ok {
+	if subinfo, ok = userInfos[sub]; !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("cant find sub"))
 		return
 	}
 
-	dataStore.AddSubscription(context.userinfo, sub)
+	dataStore.AddSubscription(context.userinfo, sub, subinfo.name)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
@@ -359,9 +366,9 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 	case "GET":
 
-		usersummaries := map[string]map[string]int{}
-		for key, userinfo := range userInfos {
-			usersummaries[key] = userinfo.summary
+		usersummaries := map[string]*userinfoDto{}
+		for userid, userinfo := range userInfos {
+			usersummaries[userid] = &userinfoDto{Summary: userinfo.summary, Name: userinfo.name}
 		}
 
 		j, _ := json.Marshal(usersummaries)

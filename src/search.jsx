@@ -14,6 +14,7 @@ module.exports = React.createClass({
   },
   render:function(){
 
+    var usernamelookup = this.props.usernamelookup;
     var onsubadded=this.props.onsubadded;
     var users = this.props.userlookup;
     var tagfilter = this.state.tagfilter.toLowerCase();
@@ -39,6 +40,7 @@ module.exports = React.createClass({
     var usersummaries = filteredusers.map(function(userid){
       console.log("userid",userid);
 
+      var userName = usernamelookup[userid];
       var user = users[userid];
 
       var languages=Object.keys(user);
@@ -82,7 +84,7 @@ module.exports = React.createClass({
         <div className="raised bookmark">
           <button className="raised float-right" type="button" onClick={addme}>subscribe!</button>
           <div style={{"padding":"1em 0"}}>
-            user_name@gmail.com
+            {userName}
           </div>
 
           {bars}
