@@ -8,8 +8,24 @@ var Bookmarks = require("./bookmarks");
 
 var client = HttpClient();
 
-var storedid = localStorage.getItem("userid");
-var storedtoken = localStorage.getItem("token");
+var storedid = localStorage.getItem("loginid");
+var storedtoken =  localStorage.getItem("token");
+var accountid = localStorage.getItem("accountid");
+
+function mapQueryString(s){
+      return s.split('&')
+  .map(function(kvp){
+        return kvp.split('=');
+  }).reduce(function(sum,current){
+        var key = current[0];
+        var value = current[1];
+        sum[key] = value;
+        return sum;
+  },{});
+}
+
+var qs = mapQueryString(location.search.substr(1));
+var code = qs["code"];
 
 var App = React.createClass({
   getInitialState: function() {
@@ -25,7 +41,8 @@ var App = React.createClass({
       bookmarks:[],
       hostname:hostname,
       userlookup:{},
-      tagfilter:""
+      tagfilter:"",
+      userid:accountid
     };
   },
   addSub:function(e){
@@ -55,18 +72,36 @@ var App = React.createClass({
 
     var getToken;
 
-    if (storedtoken===null||storedid===null){
-      getToken = client.post("/api/user").then(function(result){
+    var getToken = new Promise(function(resolve,reject){
+
+      if (storedtoken!==null&&storedid!==null&&accountid!==null){
+        resolve({user:storedid,token:storedtoken,userid:accountid});
+      }else if (typeof(code)!=="undefined") {
+
+        client.post("/api/user?code="+code).then(function(result){
+          resolve(JSON.parse(result));
+        });
+
+      }else{
+          reject("you need to register!");
+      }
+
+    });
+/*
+    if (typeof(code)!=="undefined"storedtoken===null||storedid===null){
+      getToken = client.post("/api/user?code=37ffb2fef37aea6578b9").then(function(result){
         return JSON.parse(result);
       });
     }else{
       getToken = Promise.resolve({user:storedid,token:storedtoken});
     }
+    */
 
     getToken.then(function(result){
       self.setState(result);
-      localStorage.setItem("userid",result.user);
+      localStorage.setItem("loginid",result.user);
       localStorage.setItem("token",result.token);
+      localStorage.setItem("accountid",result.userid);
 
       console.log("logging in as:", result.user+":"+result.token);
       var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
@@ -110,7 +145,6 @@ var App = React.createClass({
   },
   render:function(){
 
-
     var currentFilter = this.state.tagfilter.toLowerCase();
     var bookmarks = this.state.bookmarks;
 
@@ -121,7 +155,7 @@ var App = React.createClass({
       });
     }
 
-
+    bookmarks.sort((a,b)=>b.Time-a.Time);
 
     var part1=
     'javascript:(function(e){typeof(_tevsel)==="undefined"||!(_tevsel&&_tevsel.parentElement&&document.body.removeChild(_tevsel));_tevsel=document.createElement("div");_tevsel.style.position="fixed";_tevsel.style.top="0";_tevsel.style.left="0";_tevsel.style.backgroundColor="cornflowerblue";_tevsel.style.zIndex="9999";_tevsel.style.padding="5px";_tevsurl=document.createElement("input");_tevsurl.type="text";_tevsurl.value=location;_tevsurl.style.width="350px";_tevsurl.style.display="block";_tevsurl.style.margin="3px";_tevsurl.style.padding="3px";_tevsdes=document.createElement("input");_tevsdes.type="text";_tevsdes.style.width="350px";_tevsdes.style.display="block";_tevsdes.style.margin="3px";_tevsdes.style.padding="3px";_tevsdes.placeholder="enter\\x20a\\x20description";_tevsdes.value=document.title;_tevstags=document.createElement("input");_tevstags.type="text";_tevstags.style.width="350px";_tevstags.style.display="block";_tevstags.style.margin="3px";_tevstags.style.padding="3px";_tevstags.placeholder="separate\\x20tags\\x20with\\x20commas";_tevsbut=document.createElement("input");_tevsbut.type="button";_tevsbut.value="submit";_tevsbut.style.padding="8px";_tevsbut.style.margin="3px";_tevscancel=document.createElement("input");_tevscancel.type="button";_tevscancel.value="cancel";_tevscancel.style.margin="3px";_tevscancel.style.padding="8px";_tevscancel.style.float="right";document.body.appendChild(_tevsel);_tevsel.appendChild(_tevsurl);_tevsel.appendChild(_tevsdes);_tevsel.appendChild(_tevstags);_tevsel.appendChild(_tevsbut);_tevsel.appendChild(_tevscancel);_tevscancel.onclick=function(e){document.body.removeChild(_tevsel);};_tevsbut.onclick=function(e){_tevscontent={url:_tevsurl.value,description:_tevsdes.value,tags:_tevstags.value.split(",").map(function(tag){return(tag.trim())})};_tevsclient=document.createElement("img");_tevsclient.src="http://';
@@ -146,7 +180,7 @@ var App = React.createClass({
         </div>
 
         <div className="section">
-          <Bookmarks bookmarks={bookmarks} user={this.state.user}></Bookmarks>
+          <Bookmarks bookmarks={bookmarks} user={this.state.userid}></Bookmarks>
         </div>
       </div>
     )

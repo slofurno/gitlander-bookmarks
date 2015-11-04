@@ -9,6 +9,8 @@ type DataUnion struct {
 	UserId   string
 	Bookmark *Bookmark
 	Sub      string
+	Token    string
+	Name     string
 }
 
 type DataStore struct {
@@ -35,7 +37,23 @@ func (s *DataStore) AddBookmark(userinfo *userInfo, bookmark *Bookmark) {
 
 }
 
-func (s *DataStore) AddUser() {
+func (s *DataStore) AddUser(userinfo *userInfo) {
+
+	userinfo.subscriptions.Add(userinfo.userid, userinfo.userid)
+	userTokens[userinfo.token] = userinfo.userid
+	userInfos[userinfo.userid] = userinfo
+
+	data := &DataUnion{
+		UserId: userinfo.userid,
+		Token:  userinfo.token,
+		Name:   userinfo.name,
+	}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	database.WriteRecord(b)
 
 }
 

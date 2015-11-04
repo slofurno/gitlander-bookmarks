@@ -11,20 +11,33 @@ import (
 	"github.com/nu7hatch/gouuid"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 )
 
+var userTokens = map[string]string{}
 var userInfos = map[string]*userInfo{}
 
 var secretKey []byte
 var database = newFilebase("test.db")
 var dataStore = &DataStore{}
 
+var client_id string
+var client_secret string
+
+type clientSecrets struct {
+	Client_id     string
+	Client_secret string
+}
+
 type userInfo struct {
 	subscriptions *Collection
 	bookmarks     *Collection
 	summary       map[string]int
 	userid        string
+	name          string
+	token         string
 }
 
 type RequestContext struct {
@@ -43,6 +56,22 @@ func makeUuid() string {
 
 func init() {
 	var err error
+	cj, err := ioutil.ReadFile("secret/clientsecrets")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	clientsecrets := &clientSecrets{}
+	err = json.Unmarshal(cj, clientsecrets)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	client_secret = clientsecrets.Client_secret
+	client_id = clientsecrets.Client_id
+
 	secretKey, err = ioutil.ReadFile("secret/secret.key")
 	if err != nil {
 		panic("i need the secret key")
@@ -76,8 +105,11 @@ func init() {
 
 		if du.Bookmark != nil {
 			dataStore.AddBookmark(userinfo, du.Bookmark)
-		} else {
+		} else if du.Sub != "" {
 			dataStore.AddSubscription(userinfo, du.Sub)
+		} else {
+			userTokens[du.Token] = du.UserId
+			userinfo.name = du.Name
 		}
 
 	}
@@ -121,10 +153,11 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 
 		if userid != "" && token != "" {
 
+			var githubid string
 			var user *userInfo
 			var ok bool
 
-			if user, ok = userInfos[userid]; ok {
+			if githubid, ok = userTokens[userid]; ok {
 
 				tb, _ := base32.StdEncoding.DecodeString(token)
 				mac := hmac.New(sha256.New, secretKey)
@@ -132,10 +165,15 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 				expected := mac.Sum(nil)
 
 				if hmac.Equal(expected, tb) {
-					context.isAuthed = true
-					context.userinfo = user
-					context.userinfo.userid = userid
-					fmt.Println("user authed as: ", userid)
+
+					if user, ok = userInfos[githubid]; ok {
+
+						context.isAuthed = true
+						context.userinfo = user
+						context.userinfo.userid = githubid
+						fmt.Println("user authed as: ", githubid)
+
+					}
 				}
 			}
 		}
@@ -246,21 +284,68 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 
-		userid := makeUuid()
+		code := r.URL.Query().Get("code")
+
+		if code == "" {
+			return
+		}
+
+		response, err := http.Post("https://github.com/login/oauth/access_token?client_id="+client_id+"&client_secret="+client_secret+"&code="+code, "application/json", nil)
+		defer response.Body.Close()
+
+		fmt.Println("github status code:", response.StatusCode)
+
+		bb, _ := ioutil.ReadAll(response.Body)
+
+		githubqs, err := url.ParseQuery(string(bb))
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		githubtoken := githubqs.Get("access_token")
+		githubresponse, err := http.Get("https://api.github.com/user?access_token=" + githubtoken)
+
+		ghb, _ := ioutil.ReadAll(githubresponse.Body)
+
+		github_user := &GithubUserResponse{}
+		err = json.Unmarshal(ghb, github_user)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		//we can get here with all failures from github...
+		if github_user.Id == 0 {
+			fmt.Println("github userid of 0...")
+			return
+		}
+
+		fmt.Println("github user:", github_user)
+
+		userid := strconv.FormatUint(github_user.Id, 10)
+		usertoken := makeUuid()
 		userinfo := newUserInfo()
-		userinfo.subscriptions.Add(userid, userid)
-		userInfos[userid] = userinfo
+		userinfo.token = usertoken
+		userinfo.userid = userid
+		userinfo.name = github_user.Login
+
+		dataStore.AddUser(userinfo)
 
 		mac := hmac.New(sha256.New, secretKey)
-		mac.Write([]byte(userid))
+
+		mac.Write([]byte(usertoken))
 		b := mac.Sum(nil)
 
 		token := base32.StdEncoding.EncodeToString(b)
 
 		userResponse := struct {
-			User  string `json:"user"`
-			Token string `json:"token"`
-		}{userid, token}
+			User   string `json:"user"`
+			Token  string `json:"token"`
+			UserId string `json:"userid"`
+		}{usertoken, token, userid}
 
 		jb, err := json.Marshal(userResponse)
 

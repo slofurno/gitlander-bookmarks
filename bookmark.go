@@ -11,6 +11,13 @@ func getCurrentTime() int64 {
 	return nanos / 1000000
 }
 
+type GithubUserResponse struct {
+	Login string `json:"login"`
+	Url   string `json:"url"`
+	Name  string `json:"name"`
+	Id    uint64 `json:"id"`
+}
+
 type BookmarkRequest struct {
 	//User        string   `json:"user"`
 	Url         string   `json:"url"`
@@ -60,7 +67,6 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 				fmt.Println(err.Error())
 				return
 			}
-			fmt.Println("sending json:", j)
 			socket.Write(j)
 		}
 

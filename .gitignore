@@ -2,3 +2,4 @@
 *.exe
 test.db
 static/*.js
+/secret
