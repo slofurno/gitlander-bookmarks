@@ -93,7 +93,7 @@ module.exports = React.createClass({
 
     return (
      <div>
-      <p><label>tag filter: <input onChange={this.filterUsers} type="text"/></label></p>
+      <p><label>user filter: <input onChange={this.filterUsers} type="text"/></label></p>
       {usersummaries}
     </div>)
 
