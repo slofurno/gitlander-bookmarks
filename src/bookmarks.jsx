@@ -25,7 +25,10 @@ module.exports = React.createClass({
 
       var agemessage = "";
 
-      if (minutes>90){
+      if (minutes>2160){
+        var days = (minutes/1440 + 0.5)|0;
+        agemessage = days + " days ago";
+      }else if (minutes>90){
         var hours = (minutes/60 + 0.5)|0;
         agemessage = hours + " hours ago";
       }else if (minutes > 0){
