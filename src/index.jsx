@@ -242,7 +242,7 @@ var App = React.createClass({
           <div style={{textAlign:"center"}}>
         {githublogin} {tevs}
         <a href="#" onClick={nothing}>add bookmark</a><span> | </span>
-        <a href="#" onClick={nothing}>show bookmarklet</a>
+        <a href="#" onClick={showBookmarklet}>show bookmarklet</a>
           </div>
         {headerContent}
       </div>
