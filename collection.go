@@ -10,6 +10,8 @@ type Cursor interface {
 	fetch2() []interface{}
 }
 
+type collectionEvent func()
+
 type Collection struct {
 	store     map[string]interface{}
 	callbacks []*Callback
@@ -38,8 +40,6 @@ func (c *Collection) eventLoop() {
 	}
 
 }
-
-type collectionEvent func()
 
 func (c *Collection) Fetch() []interface{} {
 
@@ -90,6 +90,10 @@ func (c *Collection) Update(key string, value interface{}) {
 	}
 
 	c.events <- update
+}
+
+func (c *Collection) Remove(key string, value interface{}) {
+
 }
 
 func (c *Collection) ObserveChanges(callback *Callback) func() {

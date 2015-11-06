@@ -83,6 +83,7 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 			socket.Write(j)
 		}
 
+		//TODO: consider how changing a bookmark's tags will affect our usersummary...
 		changed := func(key string, value interface{}) {
 			//
 		}

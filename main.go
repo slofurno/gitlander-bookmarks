@@ -126,6 +126,23 @@ func init() {
 
 func main() {
 
+	/*
+	  keydir:="/etc/letsencrypt/live/gitlander.com/"
+
+	  go func() {
+	    err := http.ListenAndServe(":80", http.RedirectHandler("https://bookmarks.gitlander.com", http.StatusFound))
+	    if err != nil {
+	      panic("Error: " + err.Error())
+	    }
+	  }()
+
+	  err := http.ListenAndServeTLS(":443", keydir+"fullchain.pem", keydir+"privkey.pem", nil)
+	  if err != nil {
+	    log.Fatal("ListenAndServe: ", err)
+
+	  }
+	*/
+
 	http.HandleFunc("/api/img/", authed(imgHandler))
 	http.HandleFunc("/ws", authed(websocketHandler))
 	http.HandleFunc("/api/follow", authed(subscriptionHandler))

@@ -27,6 +27,7 @@ function mapQueryString(s){
 var qs = mapQueryString(location.search.substr(1));
 var code = qs["code"];
 
+
 var App = React.createClass({
   getInitialState: function() {
     console.log("getInitialState");
@@ -94,6 +95,7 @@ var App = React.createClass({
         resolve({user:storedid,token:storedtoken,userid:accountid});
       }else if (typeof(code)!=="undefined") {
 
+        history.pushState('','','/');
         client.post("/api/user?code="+code).then(function(result){
           resolve(JSON.parse(result));
         });
