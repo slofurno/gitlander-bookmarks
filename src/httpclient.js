@@ -1,5 +1,26 @@
 var httpClient = function httpClient(){
 "use strict";
+
+  var request = function(method, uri, body){
+
+    body=body||"";
+
+    return new Promise(function(resolve,reject){
+      var client = new XMLHttpRequest();
+
+      client.onload=function(e){
+        if (this.status==200){
+          resolve(this.response);
+        }else{
+          reject(this.statusText);
+        }
+      };
+
+      client.open(method,uri);
+      client.send(body);
+    });
+  };
+
 	var Get = function(uri){
 
 		var promise = new Promise( function (resolve, reject) {
@@ -11,12 +32,10 @@ var httpClient = function httpClient(){
 				}else{
 					reject(this.statusText);
 				}
-
 			};
 
 			client.open("GET",uri);
 			client.send();
-
 		});
 
 		return promise;
@@ -65,7 +84,7 @@ var httpClient = function httpClient(){
 
 	};
 
-	return {get:Get,post:Post};
+	return {get:Get,post:Post, request:request};
 };
 
 module.exports = httpClient;

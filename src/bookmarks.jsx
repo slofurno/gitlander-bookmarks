@@ -1,5 +1,6 @@
 /** @jsx React.DOM */
 var React = require('react');
+var Bookmark = require('./bookmark')
 
 
 module.exports = React.createClass({
@@ -10,12 +11,23 @@ module.exports = React.createClass({
   componentDidMount:function(){
 
   },
+
   render:function(){
 
     var self = this;
+    var user = self.props.user;
+    var usernamelookup = self.props.usernamelookup;
 
     var bookmarklist = this.props.bookmarks.map(function(bookmark){
+      //TODO:maybe pass owned bool instead of lookup ref
+      return <Bookmark key={bookmark.Id} bookmark={bookmark} user={user} usernamelookup={usernamelookup}> </Bookmark>
 
+    });
+
+    return <div>{bookmarklist}</div>
+
+
+      /*
       var owner = bookmark.Owner;
 
       var millis = Date.now() - bookmark.Time;
@@ -39,7 +51,7 @@ module.exports = React.createClass({
 
       console.log(self.props.user, owner);
       if (owner===self.props.user){
-        owner = "you";
+        owner = <a href="#" onClick={startEdit}>Edit</a>
       }else{
         owner = self.props.usernamelookup[owner];
       }
@@ -61,7 +73,9 @@ module.exports = React.createClass({
 
               </div>);
     });
-    return <div>{bookmarklist}</div>
+
+      return <div>{bookmarklist}</div>
+    */
 
   }
 });
