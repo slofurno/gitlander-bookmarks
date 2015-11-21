@@ -16,12 +16,11 @@
     font-style: normal;
 }
 
-*{
+* {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   font-family: "Fira Mono";
-
 }
 
 a{
@@ -29,16 +28,16 @@ a{
   text-decoration: none;
 }
 
-a:active, a:hover{
+a:active, a:hover {
   text-decoration: underline;
 }
 
-body{
+body {
   font-size:100%;
   color:hsl(220, 14%, 71%);
 }
 
-.bookmark{
+.bookmark {
   vertical-align: top;
   display:inline-block;
   background-color:rgb(51, 56, 66);
@@ -58,7 +57,7 @@ button{
   padding:0.8em 0.6em;
   outline: none;
   cursor: pointer;
-
+  margin-right: 10px;
 
   -webkit-transition: background-color .5s;
   -moz-transition: background-color .5s;
@@ -81,12 +80,30 @@ button:active{
 
 input{
   padding:0.8em 0.6em;
-  margin:0.2em 0.2em;
+  margin: 0.6em 0;
   width:100%;
   color:hsl(220, 14%, 71%);
   background-color: hsl(220,13%,18%);
-  border:1px solid rgb(51, 56, 66);
+  outline: none;
+  /*border:2px solid hsl(220, 14%, 50%);*/
 
+  border-color: hsl(220, 14%, 50%);
+  border-style:solid;
+  border-width: 2px;
+
+  -webkit-transition: border-color .5s;
+  -moz-transition: border-color .5s;
+  -ms-transition: border-color .5s;
+  -o-transition: border-color .5s;
+  transition: border-color .5s;
+}
+
+input[type="text"] {
+  border-width: 0 0 2px 0;
+}
+
+input:hover, input:focus, input:active{
+  border-color:springgreen;
 }
 
 .tag{
@@ -96,6 +113,7 @@ input{
   line-height:1.2em;
   padding: 0.6em 0.5em;
   margin: 0.2em 0.4em 0.2em 0;
+  cursor: pointer;
 
   -webkit-transition: background-color .5s;
   -moz-transition: background-color .5s;
@@ -113,7 +131,7 @@ input{
   font-size: 0.8em;
   position:relative;
   width:100%;
-  padding:15px;
+  padding:5px 10px;
   margin: auto;
   height:100%;
   min-height:600px;
@@ -139,7 +157,8 @@ input{
 }
 
 .section{
-  margin:1em 0;
+  margin: 0.4em 0;
+  padding: 0.4em 0.4em;
 }
 
 .raised{

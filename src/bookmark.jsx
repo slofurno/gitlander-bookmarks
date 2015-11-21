@@ -62,7 +62,7 @@ module.exports = React.createClass({
     var contents = "";
 
     if (self.state.isEditing){
-      contents = (<div style={{height:"20em", overflow:"hidden"}}>
+      contents = (<div style={{height:"20em", overflowY:"hidden"}}>
                   <input type="text" value={self.state.Description} onChange={self.updateDescription}></input>
                   <input type="text" value={self.state.Url} onChange={self.updateUrl}></input>
                   <input type="text" value={self.state.Tags} onChange={self.updateTags}></input>
@@ -70,7 +70,7 @@ module.exports = React.createClass({
       owner = <a href="#" onClick={self.saveEdit}>Save</a>
 
     }else{
-      contents = (<div style={{height:"20em", overflow:"hidden"}}>
+      contents = (<div style={{height:"20em", overflowY:"hidden"}}>
                   <h2>{bookmark.Description}</h2>
                  <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
                  <div>{bookmark.Summary}</div>

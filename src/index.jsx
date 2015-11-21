@@ -133,7 +133,7 @@ var App = React.createClass({
       var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
       ws.onmessage=function(e){
         var update = JSON.parse(e.data);
-        console.log("update rec", update);
+        //console.log("update rec", update);
 
         if (typeof(update.Name)==="undefined"){
           var newbookmarks=self.state.bookmarks.slice();
@@ -204,7 +204,9 @@ var App = React.createClass({
 
     var tag_breakdown = Object.keys(summary).map(x=>({tag:x, count:summary[x]}));
 
-    tag_breakdown.sort((a,b)=>a.count-b.count);
+    tag_breakdown.sort((a,b)=>b.count-a.count);
+
+    console.log(tag_breakdown);
 
     var popular_tags = tag_breakdown.map(x=>{
       var onclick = function(e){
@@ -254,18 +256,18 @@ var App = React.createClass({
       break;
     }
 
+    var part1=
+      'javascript:(function(e){typeof(_tevsel)==="undefined"||!(_tevsel&&_tevsel.parentElement&&document.body.removeChild(_tevsel));_tevsel=document.createElement("div");_tevsel.style.position="fixed";_tevsel.style.top="0";_tevsel.style.left="0";_tevsel.style.backgroundColor="cornflowerblue";_tevsel.style.zIndex="9999";_tevsel.style.padding="5px";_tevsurl=document.createElement("input");_tevsurl.type="text";_tevsurl.value=location;_tevsurl.style.width="350px";_tevsurl.style.display="block";_tevsurl.style.margin="3px";_tevsurl.style.padding="3px";_tevsdes=document.createElement("input");_tevsdes.type="text";_tevsdes.style.width="350px";_tevsdes.style.display="block";_tevsdes.style.margin="3px";_tevsdes.style.padding="3px";_tevsdes.placeholder="enter\\x20a\\x20description";_tevsdes.value=document.title;_tevstags=document.createElement("input");_tevstags.type="text";_tevstags.style.width="350px";_tevstags.style.display="block";_tevstags.style.margin="3px";_tevstags.style.padding="3px";_tevstags.placeholder="separate\\x20tags\\x20with\\x20commas";_tevsbut=document.createElement("input");_tevsbut.type="button";_tevsbut.value="submit";_tevsbut.style.padding="8px";_tevsbut.style.margin="3px";_tevscancel=document.createElement("input");_tevscancel.type="button";_tevscancel.value="cancel";_tevscancel.style.margin="3px";_tevscancel.style.padding="8px";_tevscancel.style.float="right";document.body.appendChild(_tevsel);_tevsel.appendChild(_tevsurl);_tevsel.appendChild(_tevsdes);_tevsel.appendChild(_tevstags);_tevsel.appendChild(_tevsbut);_tevsel.appendChild(_tevscancel);_tevscancel.onclick=function(e){document.body.removeChild(_tevsel);};_tevsbut.onclick=function(e){_tevscontent={url:_tevsurl.value,description:_tevsdes.value,tags:_tevstags.value.split(",").map(function(tag){return(tag.trim())})};_tevsclient=document.createElement("img");_tevsclient.src="http://';
+      var part3='";document.body.removeChild(_tevsel);}})();';
+      var bookmarklet = part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
+
     var headerContent = "";
 
     switch(currentHeader){
 
       case "bookmarklet":
-      var part1=
-      'javascript:(function(e){typeof(_tevsel)==="undefined"||!(_tevsel&&_tevsel.parentElement&&document.body.removeChild(_tevsel));_tevsel=document.createElement("div");_tevsel.style.position="fixed";_tevsel.style.top="0";_tevsel.style.left="0";_tevsel.style.backgroundColor="cornflowerblue";_tevsel.style.zIndex="9999";_tevsel.style.padding="5px";_tevsurl=document.createElement("input");_tevsurl.type="text";_tevsurl.value=location;_tevsurl.style.width="350px";_tevsurl.style.display="block";_tevsurl.style.margin="3px";_tevsurl.style.padding="3px";_tevsdes=document.createElement("input");_tevsdes.type="text";_tevsdes.style.width="350px";_tevsdes.style.display="block";_tevsdes.style.margin="3px";_tevsdes.style.padding="3px";_tevsdes.placeholder="enter\\x20a\\x20description";_tevsdes.value=document.title;_tevstags=document.createElement("input");_tevstags.type="text";_tevstags.style.width="350px";_tevstags.style.display="block";_tevstags.style.margin="3px";_tevstags.style.padding="3px";_tevstags.placeholder="separate\\x20tags\\x20with\\x20commas";_tevsbut=document.createElement("input");_tevsbut.type="button";_tevsbut.value="submit";_tevsbut.style.padding="8px";_tevsbut.style.margin="3px";_tevscancel=document.createElement("input");_tevscancel.type="button";_tevscancel.value="cancel";_tevscancel.style.margin="3px";_tevscancel.style.padding="8px";_tevscancel.style.float="right";document.body.appendChild(_tevsel);_tevsel.appendChild(_tevsurl);_tevsel.appendChild(_tevsdes);_tevsel.appendChild(_tevstags);_tevsel.appendChild(_tevsbut);_tevsel.appendChild(_tevscancel);_tevscancel.onclick=function(e){document.body.removeChild(_tevsel);};_tevsbut.onclick=function(e){_tevscontent={url:_tevsurl.value,description:_tevsdes.value,tags:_tevstags.value.split(",").map(function(tag){return(tag.trim())})};_tevsclient=document.createElement("img");_tevsclient.src="http://';
-      var part3='";document.body.removeChild(_tevsel);}})();';
-      var fullstring=part1+ this.state.hostname + ":555/api/img/user.gif?user="+this.state.user+"&token=" + encodeURIComponent(this.state.token) + "&body=\"+encodeURIComponent(JSON.stringify(_tevscontent))+\"" + part3;
-
       headerContent=(<div className="smaller">
-                <p><label>your bookmarklet url:<input type="text" value={fullstring}></input></label></p>
+                <p><label>your bookmarklet url:<input type="text" value={bookmarklet}></input></label></p>
               </div>);
 
       break;
@@ -299,33 +301,35 @@ var App = React.createClass({
           self.postBookmark();
         };
 
-        headerContent = (<div style={{height:"20em", overflow:"hidden"}}>
+        headerContent = (<div style={{height:"20em"}}>
                   <input type="text" value={self.state.newbookmark.Url} onChange={changeurl} placeholder={"Url"}></input>
                   <input type="text" value={self.state.newbookmark.Description} onChange={changedes} placeholder={"Description"}></input>
                   <input type="text" value={self.state.newbookmark.RawTags} onChange={changetags} placeholder={"Tags"}></input>
-                  <input type="button" value="submit!" onClick={submit_bm}/>
+                  <button type="button" onClick={submit_bm}>submit!</button>
+                  <button type="button" onClick={nothing}>cancel</button>
                  </div>);
       default:
 
       break;
     }
-
+        
+    //<a href="#" onClick={showNewBookmark}>add bookmark</a>
 
     return(
       <div>
         <div className="section">
           <div style={{textAlign:"center"}}>
         {githublogin} {tevs}
-        <a href="#" onClick={nothing}>home</a><span> | </span>
-        <a href="#" onClick={showBookmarklet}>show bookmarklet</a><span> | </span>
-        <a href="#" onClick={showNewBookmark}>add bookmark</a>
+        <a href={bookmarklet}>show bookmarklet / add bookmark</a>
           </div>
         
         {headerContent}
       </div>
 
         <div className="section">
-          <p><label>bookmark filter: <input value={self.state.tagfilter} onChange={this.filterUsers} placeholder="separate tags with commas" type="text"/></label></p>
+          <input value={self.state.tagfilter} onChange={this.filterUsers} placeholder="tag filter" type="text"/>
+          filter by topic, or select one of the popular topics below
+          
         </div>
 
         <div className="section">
