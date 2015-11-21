@@ -1,6 +1,5 @@
 var React = require('react');
 
-
 module.exports = React.createClass({
   getInitialState:function(){
     return {isEditing:false};
@@ -56,8 +55,6 @@ module.exports = React.createClass({
       agemessage = "just now";
     }
 
-
-
     var tags = bookmark.Tags.map(function(tag,index){
       return (<div key={index} className="tag"> {tag} </div>)
     });
@@ -65,28 +62,24 @@ module.exports = React.createClass({
     var contents = "";
 
     if (self.state.isEditing){
-
+      contents = (<div style={{height:"20em", overflow:"hidden"}}>
+                  <input type="text" value={self.state.Description} onChange={self.updateDescription}></input>
+                  <input type="text" value={self.state.Url} onChange={self.updateUrl}></input>
+                  <input type="text" value={self.state.Tags} onChange={self.updateTags}></input>
+                 </div>);
       owner = <a href="#" onClick={self.saveEdit}>Save</a>
 
-        console.log("are we editing yet?");
-        contents = (<div style={{height:"20em", overflow:"hidden"}}>
-                    <input type="text" value={self.state.Description} onChange={self.updateDescription}></input>
-                    <input type="text" value={self.state.Url} onChange={self.updateUrl}></input>
-                    <input type="text" value={self.state.Tags} onChange={self.updateTags}></input>
-                   </div>);
     }else{
-
+      contents = (<div style={{height:"20em", overflow:"hidden"}}>
+                  <h2>{bookmark.Description}</h2>
+                 <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
+                 <div>{bookmark.Summary}</div>
+                 </div>);
       if (owner===self.props.user){
         owner = <a href="#" onClick={self.startEdit}>Edit</a>
       }else{
         owner = self.props.usernamelookup[owner];
       }
-
-        contents = (<div style={{height:"20em", overflow:"hidden"}}>
-                    <h2>{bookmark.Description}</h2>
-                   <div className="smaller"><a href={bookmark.Url}>{bookmark.Url}</a></div>
-                   <div>{bookmark.Summary}</div>
-                   </div>);
     }
 
     return (<div className="bookmark raised" style={{width:"360px", margin:"0 2px 2px 0", padding:"1em"}}>
@@ -94,10 +87,7 @@ module.exports = React.createClass({
               <div>
                 {tags} {agemessage }<div style={{float:"right",padding:"1em 0 0 0"}}>{owner}</div>
               </div>
-
             </div>);
-
-
   }
 
 });

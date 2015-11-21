@@ -30,6 +30,7 @@ type User struct {
 }
 
 type UserConnection struct {
+	//stores func to stop observing... can i move to closure?
 	handles       map[string]func()
 	subscriptions *Collection
 	onstop        func()
@@ -84,7 +85,7 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 		}
 
 		//TODO: consider how changing a bookmark's tags will affect our usersummary...
-		changed := func(key string, value interface{}) {
+		changed := func(key string, value interface{}, old interface{}) {
 			//
 		}
 
@@ -97,7 +98,7 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 
 	}
 
-	subchanged := func(key string, value interface{}) {
+	subchanged := func(key string, value interface{}, old interface{}) {
 		fmt.Println("subchanged")
 	}
 

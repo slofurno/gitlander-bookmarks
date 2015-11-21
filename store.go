@@ -18,6 +18,7 @@ type DataStore struct {
 
 func (s *DataStore) AddBookmark(userinfo *userInfo, bookmark *Bookmark) {
 
+	//TODO:if we update bookmarks here were gonna dup tags
 	for _, tag := range bookmark.Tags {
 		userinfo.summary[tag] += 1
 	}

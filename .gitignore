@@ -1,3 +1,8 @@
+*
+!*.*
+!*/
+!makefile
+
 /node_modules
 *.exe
 test.db

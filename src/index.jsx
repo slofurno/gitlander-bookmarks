@@ -46,7 +46,9 @@ var App = React.createClass({
       tagfilter:"",
       userid:accountid,
       page:"bookmarks",
-      headerpage:""
+      headerpage:"",
+      summary: {},
+      newbookmark: {Url:"", Description:"", RawTags: ""}
     };
   },
   addSub:function(e){
@@ -70,6 +72,12 @@ var App = React.createClass({
   componentDidMount: function() {
     console.log("componentDidMount");
     var self = this;
+
+    client.get("/api/summary").then(function(result){
+      var summary = JSON.parse(result);
+      self.setState({summary:summary});
+
+    }).catch(err=>console.log(err));
 
     client.get("/api/user").then(function(result){
 
@@ -150,13 +158,25 @@ var App = React.createClass({
     this.setState({tagfilter:e.target.value});
 
   },
+  setFilter:function(tag){
+    this.setState({tagfilter:tag});
+  },
   setHeader:function(e,page){
     e.preventDefault();
     this.setState({headerpage:page});
 
   },
-  render:function(){
+  postBookmark:function(){
+    var bm = this.state.newbookmark;
+    var tags = bm.RawTags.split(",").map(x=>x.trim());
+    var bookmark = {url: bm.Url, tags: tags, description: bm.Description};
 
+    var client = HttpClient();
+    client.post("/api/bookmarks?user=" + this.state.user + "&token=" + this.state.token, JSON.stringify(bookmark)).then(function(rep){console.log(rep)}).catch(function(err){console.log(err)});
+
+  },
+  render:function(){
+    var self = this;
     var setPage = this.setPage;
     var setHeader = this.setHeader;
 
@@ -172,10 +192,27 @@ var App = React.createClass({
       setHeader(e,"bookmarklet");
     };
 
+    var showNewBookmark = function(e){
+      setHeader(e, "newbookmark");
+    };
+
     var nothing= function(e){
         setHeader(e,"");
     };
 
+    var summary = self.state.summary;
+
+    var tag_breakdown = Object.keys(summary).map(x=>({tag:x, count:summary[x]}));
+
+    tag_breakdown.sort((a,b)=>a.count-b.count);
+
+    var popular_tags = tag_breakdown.map(x=>{
+      var onclick = function(e){
+        e.preventDefault();
+        self.setFilter(x.tag);
+      };
+      return (<div key={x.tag} className="tag" onClick={onclick}> {x.tag} </div>);
+    });
 
     var currentFilter = this.state.tagfilter.toLowerCase();
     var bookmarks = this.state.bookmarks;
@@ -232,6 +269,42 @@ var App = React.createClass({
               </div>);
 
       break;
+
+      case "newbookmark":
+
+        var setnewbm = function(bm){
+          self.setState({newbookmark:bm});
+        };
+
+        var changedes = function(e){
+          var bm = self.state.newbookmark;
+          bm.Description=e.target.value;
+          setnewbm(bm);
+        };
+
+        var changeurl = function(e){
+          var bm = self.state.newbookmark;
+          bm.Url = e.target.value;
+          setnewbm(bm);
+        };
+
+        var changetags = function(e){
+          var bm = self.state.newbookmark;
+          bm.RawTags = e.target.value;
+          setnewbm(bm);
+        };
+
+        var submit_bm = function(e){
+          e.preventDefault();
+          self.postBookmark();
+        };
+
+        headerContent = (<div style={{height:"20em", overflow:"hidden"}}>
+                  <input type="text" value={self.state.newbookmark.Url} onChange={changeurl} placeholder={"Url"}></input>
+                  <input type="text" value={self.state.newbookmark.Description} onChange={changedes} placeholder={"Description"}></input>
+                  <input type="text" value={self.state.newbookmark.RawTags} onChange={changetags} placeholder={"Tags"}></input>
+                  <input type="button" value="submit!" onClick={submit_bm}/>
+                 </div>);
       default:
 
       break;
@@ -243,16 +316,26 @@ var App = React.createClass({
         <div className="section">
           <div style={{textAlign:"center"}}>
         {githublogin} {tevs}
-        <a href="#" onClick={nothing}>add bookmark</a><span> | </span>
-        <a href="#" onClick={showBookmarklet}>show bookmarklet</a>
+        <a href="#" onClick={nothing}>home</a><span> | </span>
+        <a href="#" onClick={showBookmarklet}>show bookmarklet</a><span> | </span>
+        <a href="#" onClick={showNewBookmark}>add bookmark</a>
           </div>
+        
         {headerContent}
       </div>
 
         <div className="section">
-          <p><label>bookmark filter: <input onChange={this.filterUsers} placeholder="separate tags with commas" type="text"/></label></p>
+          <p><label>bookmark filter: <input value={self.state.tagfilter} onChange={this.filterUsers} placeholder="separate tags with commas" type="text"/></label></p>
+        </div>
+
+        <div className="section">
+          {popular_tags}
+        </div>
+
+        <div className="section">          
           Search <a href="#" onClick={searchBookmarks}>Bookmarks</a> | <a href="#" onClick={searchUsers}>Users</a>
         </div>
+
         {githublogin}
         <div className="section">
           {content}

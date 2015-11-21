@@ -2,7 +2,7 @@ package main
 
 type Callback struct {
 	added   func(string, interface{})
-	changed func(string, interface{})
+	changed func(string, interface{}, interface{})
 	removed func(string, interface{})
 }
 
@@ -62,7 +62,10 @@ func (c *Collection) Add(key string, value interface{}) {
 
 	add := func() {
 
-		if _, ok := c.store[key]; !ok {
+		var old interface{}
+		var ok bool
+
+		if old, ok = c.store[key]; !ok {
 			c.store[key] = value
 			for _, f := range c.callbacks {
 				f.added(key, value)
@@ -70,7 +73,7 @@ func (c *Collection) Add(key string, value interface{}) {
 		} else {
 			c.store[key] = value
 			for _, f := range c.callbacks {
-				f.changed(key, value)
+				f.changed(key, value, old)
 			}
 		}
 		//TODO: is this how i want to handle repeat adds?
@@ -81,15 +84,7 @@ func (c *Collection) Add(key string, value interface{}) {
 
 func (c *Collection) Update(key string, value interface{}) {
 
-	update := func() {
-		c.store[key] = value
-
-		for _, f := range c.callbacks {
-			f.changed(key, value)
-		}
-	}
-
-	c.events <- update
+	c.Add(key, value)
 }
 
 func (c *Collection) Remove(key string, value interface{}) {
