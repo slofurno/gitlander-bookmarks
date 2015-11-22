@@ -20,7 +20,7 @@ module.exports = React.createClass({
 
     var bookmarklist = this.props.bookmarks.map(function(bookmark){
       //TODO:maybe pass owned bool instead of lookup ref
-      return <Bookmark key={bookmark.Id} bookmark={bookmark} user={user} usernamelookup={usernamelookup}> </Bookmark>
+      return <Bookmark key={bookmark.Id} bookmark={bookmark} user={user} usernamelookup={usernamelookup} putBookmark={self.props.putBookmark}> </Bookmark>
 
     });
 

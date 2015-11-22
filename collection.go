@@ -82,6 +82,7 @@ func (c *Collection) Add(key string, value interface{}) {
 	c.events <- add
 }
 
+//TODO: only expose upsert
 func (c *Collection) Update(key string, value interface{}) {
 
 	c.Add(key, value)

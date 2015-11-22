@@ -10,7 +10,10 @@ module.exports = React.createClass({
   },
   saveEdit:function(e){
     e.preventDefault();
-    console.log(this.state);
+
+    var s = this.state;
+    this.props.putBookmark({Id: this.props.bookmark.Id, Url:s.Url, Description:s.Description, RawTags:s.Tags});
+
     this.replaceState({isEditing:false});
   },
   startEdit:function(e){
@@ -20,6 +23,10 @@ module.exports = React.createClass({
     var tags = this.props.bookmark.Tags.reduce((a,c)=>a+=","+c);
 
     this.setState({isEditing:true, Url:bookmark.Url, Description:bookmark.Description, Tags:tags});
+  },
+  cancelEdit:function(e){
+    e.preventDefault();
+    this.replaceState({isEditing:false});
   },
   updateDescription:function(e){
     this.setState({Description:e.target.value});
@@ -67,7 +74,12 @@ module.exports = React.createClass({
                   <input type="text" value={self.state.Url} onChange={self.updateUrl}></input>
                   <input type="text" value={self.state.Tags} onChange={self.updateTags}></input>
                  </div>);
-      owner = <a href="#" onClick={self.saveEdit}>Save</a>
+      owner = (<div>
+                <a href="#" onClick={self.saveEdit}>Save</a>
+                <span> | </span>
+                <a href="#" onClick={self.cancelEdit}>Cancel</a>
+               </div>
+              );
 
     }else{
       contents = (<div style={{height:"20em", overflowY:"hidden"}}>
@@ -85,7 +97,10 @@ module.exports = React.createClass({
     return (<div className="bookmark raised" style={{width:"360px", margin:"0 2px 2px 0", padding:"1em"}}>
              {contents}
               <div>
-                {tags} {agemessage }<div style={{float:"right",padding:"1em 0 0 0"}}>{owner}</div>
+                {tags} {agemessage}
+                <div style={{float:"right",padding:"1em 0 0 0"}}>
+                  {owner}
+                </div>
               </div>
             </div>);
   }

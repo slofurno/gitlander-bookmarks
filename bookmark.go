@@ -20,6 +20,7 @@ type GithubUserResponse struct {
 
 type BookmarkRequest struct {
 	//User        string   `json:"user"`
+	Id          string   `json:"id"`
 	Url         string   `json:"url"`
 	Tags        []string `json:"tags"`
 	Description string   `json:"description"`
@@ -68,9 +69,7 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 		socket.Write(jj)
 
 		added := func(key string, value interface{}) {
-
 			bookmark, ok := value.(*Bookmark)
-
 			if !ok {
 				fmt.Println("how is this not a bookmark?")
 				return
@@ -86,7 +85,19 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 
 		//TODO: consider how changing a bookmark's tags will affect our usersummary...
 		changed := func(key string, value interface{}, old interface{}) {
-			//
+			bookmark, ok := value.(*Bookmark)
+			if !ok {
+				fmt.Println("how is this not a bookmark?")
+				return
+			}
+
+			j, err := json.Marshal(bookmark)
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			fmt.Println("updated bookmark:", string(j))
+			socket.Write(j)
 		}
 
 		removed := func(key string, value interface{}) {

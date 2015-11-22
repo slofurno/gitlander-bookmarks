@@ -211,6 +211,12 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 	switch method {
 
 	case "PUT":
+
+		if !context.isAuthed {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
 		b, _ := ioutil.ReadAll(r.Body)
 
 		br := &BookmarkRequest{}
@@ -221,13 +227,51 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			return
 		}
 
+		buf := []byte(br.Url)
+		//TODO: replace with survey w/ timeout?
+		resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
+
+		defer resp.Body.Close()
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		content, err := ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		bookmark := &Bookmark{
+			Id:          br.Id,
+			Url:         br.Url,
+			Description: br.Description,
+			Tags:        br.Tags,
+			Owner:       context.userinfo.userid,
+			Time:        getCurrentTime(),
+			Summary:     string(content),
+		}
+
+		dataStore.AddBookmark(context.userinfo, bookmark)
+		w.WriteHeader(http.StatusOK)
+
 	case "POST":
+
+		if !context.isAuthed {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
 		b, _ := ioutil.ReadAll(r.Body)
 
 		br := &BookmarkRequest{}
 		err := json.Unmarshal(b, br)
 
 		buf := []byte(br.Url)
+		//TODO: replace with survey w/ timeout?
 		resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
 
 		defer resp.Body.Close()

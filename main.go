@@ -65,10 +65,10 @@ func newUserInfo() *userInfo {
 		removedBooks, _ := old.(*Bookmark)
 
 		for _, tag := range addedBooks.Tags {
-			globalSummary[tag] -= 1
+			globalSummary[tag] += 1
 		}
 		for _, tag := range removedBooks.Tags {
-			globalSummary[tag] += 1
+			globalSummary[tag] -= 1
 		}
 	}
 
