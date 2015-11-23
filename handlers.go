@@ -108,6 +108,7 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 	}
 
 	dataStore.AddSubscription(context.userinfo, sub, subinfo.name)
+	w.WriteHeader(http.StatusOK)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
