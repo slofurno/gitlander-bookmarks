@@ -138,7 +138,15 @@ var App = React.createClass({
       localStorage.setItem("accountid",result.userid);
 
       console.log("logging in as:", result.user+":"+result.token);
-      var ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
+
+      var ws;
+
+      if (self.state.hostname==="localhost"){
+        ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
+      }else{
+        ws = new WebSocket("wss://"+ self.state.hostname +"/ws?user="+result.user+"&token="+result.token);
+      }
+      
 
       ws.onmessage = self.websocketHandler;
 
