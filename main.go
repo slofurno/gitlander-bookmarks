@@ -155,23 +155,6 @@ func init() {
 }
 
 func main() {
-	/*
-		privatekey := "/etc/letsencrypt/live/bookmarks.gitlander.com/privkey.pem"
-		fullchain := "/etc/letsencrypt/live/bookmarks.gitlander.com/fullchain.pem"
-
-		go func() {
-			err := http.ListenAndServe(":80", http.RedirectHandler("https://bookmarks.gitlander.com", http.StatusFound))
-			if err != nil {
-				panic("Error: " + err.Error())
-			}
-		}()
-
-		err := http.ListenAndServeTLS(":443", fullchain, privatekey, nil)
-		if err != nil {
-			fmt.Println("ListenAndServe: ", err)
-
-		}
-	*/
 
 	http.HandleFunc("/api/summary", summaryHandler)
 	http.HandleFunc("/api/img/", authed(imgHandler))
@@ -180,6 +163,7 @@ func main() {
 	http.HandleFunc("/api/bookmarks", authed(bookmarkHandler))
 	http.HandleFunc("/api/user", userHandler)
 	http.Handle("/", http.FileServer(http.Dir("static")))
+	//should only bind to local since were behind nginx
 	http.ListenAndServe(":555", nil)
 }
 

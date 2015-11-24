@@ -34,8 +34,8 @@ func (c *Collection) eventLoop() {
 
 	for {
 		select {
-		case e := <-c.events:
-			e()
+		case f := <-c.events:
+			f()
 		}
 	}
 
@@ -84,7 +84,6 @@ func (c *Collection) Add(key string, value interface{}) {
 
 //TODO: only expose upsert
 func (c *Collection) Update(key string, value interface{}) {
-
 	c.Add(key, value)
 }
 
