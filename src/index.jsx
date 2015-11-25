@@ -48,7 +48,9 @@ var App = React.createClass({
       page:"bookmarks",
       headerpage:"",
       summary: {},
-      newbookmark: {Url:"", Description:"", RawTags: ""}
+      newbookmark: {Url:"", Description:"", RawTags: ""},
+      tagfilters: [],
+      tagTimeout: -1
     };
   },
   addSub:function(e){
@@ -157,8 +159,36 @@ var App = React.createClass({
 
   },
   filterUsers:function(e){
-    this.setState({tagfilter:e.target.value});
+    var val = e.target.value;
+    var last = val.substr(-1);
+    var self = this;
 
+    clearTimeout(self.state.tagTimeout);
+
+    var addtag = function(){
+      var tag = val.replace(/,/g, "").trim();
+      if (tag.length > 0){
+        console.log("adding tag:",tag);
+        self.addFilter(tag);
+        self.setState({tagfilter:""});
+      }
+    };
+
+    if (last==="," || last===" "){
+      addtag();
+    }else{
+      var timeout = setTimeout(addtag, 1000);
+      self.setState({tagfilter:val, tagTimeout:timeout});
+    }
+
+
+  },
+  keyDown:function(e){
+    var key = e.key;
+    if (key==="Backspace" && this.state.tagfilter.length === 0){
+      console.log("delete last tag");
+      this.popFilter();
+    }
   },
   setFilter:function(tag){
     this.setState({tagfilter:tag});
@@ -167,6 +197,26 @@ var App = React.createClass({
     e.preventDefault();
     this.setState({headerpage:page});
 
+  },
+  addFilter:function(tag){
+    var tag = tag.toLowerCase();
+    var tags = this.state.tagfilters;
+
+    if (tags.indexOf(tag) >= 0){
+      return;
+    }
+
+    tags.push(tag);
+    this.setState({tagfilters:tags});
+  },
+  popFilter:function(){
+    var tags = this.state.tagfilters;
+    tags.pop();
+    this.setState({tagfilters:tags});
+  },
+  removeFilter:function(tag){
+    var tags = this.state.tagfilters.filter(x => x !== tag);
+    this.setState({tagfilters:tags});
   },
   putBookmark:function(bm){
 
@@ -327,6 +377,12 @@ var App = React.createClass({
         
     //<a href="#" onClick={showNewBookmark}>add bookmark</a>
 
+    var tagfilters = self.state.tagfilters.map(function(tag){
+      console.log(tag);
+      var onclick = function(e){self.removeFilter(tag);};
+      return(<span className="tag" onClick={onclick}>{tag}  {"\u2716"}</span>);
+    });
+
     return(
       <div>
         <div className="section">
@@ -339,7 +395,16 @@ var App = React.createClass({
       </div>
 
         <div className="section">
-          <input value={self.state.tagfilter} onChange={this.filterUsers} placeholder="tag filter" type="text"/>
+          <div style={{width:"100%", overflow:"hidden", borderColor:"springgreen", borderStyle:"solid", borderWidth:"0 0 2px 0", margin:"0.6em 0"}}>
+            <div style={{float:"left", height:"100%", margin:"0", padding:"0"}}>
+              {tagfilters}
+
+            </div>
+            <div style={{overflow:"hidden"}}>
+              <input style={{borderWidth:"0", margin:"0"}} value={self.state.tagfilter} onChange={self.filterUsers} onKeyDown={self.keyDown} placeholder="tag filter" type="text"/>
+            </div>
+         </div>
+
           filter by topic, or select one of the popular topics below
           
         </div>
