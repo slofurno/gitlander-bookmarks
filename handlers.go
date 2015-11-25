@@ -16,6 +16,7 @@ import (
 //TODO: this entire handler is a duplicate, as a workaround for restrictions on mixed content
 func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
 
+	var err error
 	body := r.URL.Query().Get("body")
 
 	if !context.isAuthed {
@@ -24,7 +25,7 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 	}
 
 	br := &BookmarkRequest{}
-	err := json.Unmarshal([]byte(body), br)
+	err = json.Unmarshal([]byte(body), br)
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotAcceptable)
@@ -32,20 +33,16 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 	}
 
 	buf := []byte(br.Url)
+	fmt.Println("req to node")
 	resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
 
-	defer resp.Body.Close()
+	var content []byte
 
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	content, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return
+	if err == nil {
+		defer resp.Body.Close()
+		content, err = ioutil.ReadAll(resp.Body)
+	} else {
+		fmt.Println("scraper err")
 	}
 
 	bookmark := &Bookmark{
@@ -275,17 +272,17 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 		//TODO: replace with survey w/ timeout?
 		resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
 
-		defer resp.Body.Close()
-
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("guess we had an error...")
+			//fmt.Println(err.Error())
 			return
 		}
 
+		defer resp.Body.Close()
 		content, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("guess we had an error reading?")
 			return
 		}
 

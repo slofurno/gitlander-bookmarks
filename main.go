@@ -164,7 +164,7 @@ func main() {
 	http.HandleFunc("/api/user", userHandler)
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	//should only bind to local since were behind nginx
-	http.ListenAndServe(":555", nil)
+	http.ListenAndServe("127.0.0.1:555", nil)
 }
 
 func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestContext)) http.HandlerFunc {
