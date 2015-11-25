@@ -1,4 +1,4 @@
-.PHONY: build
+.PHONY: run
 
 bookmarks: $(wildcard *.go)
 	go build -o bookmarks

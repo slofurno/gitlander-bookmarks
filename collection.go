@@ -6,10 +6,6 @@ type Callback struct {
 	removed func(string, interface{})
 }
 
-type Cursor interface {
-	fetch2() []interface{}
-}
-
 type collectionEvent func()
 
 type Collection struct {
