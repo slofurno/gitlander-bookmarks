@@ -50,7 +50,9 @@ var App = React.createClass({
       summary: {},
       newbookmark: {Url:"", Description:"", RawTags: ""},
       tagfilters: [],
-      tagTimeout: -1
+      tagTimeout: -1,
+      isFilterFocused: false,
+      isFilterHovered: false
     };
   },
   addSub:function(e){
@@ -79,7 +81,7 @@ var App = React.createClass({
     if (typeof(update.Name)==="undefined"){
       var newbookmarks = self.state.bookmarks.filter(b => b.Id !== update.Id);
       newbookmarks.push(update);
-      console.log("update:", update.Id, newbookmarks);
+      //console.log("update:", update.Id, newbookmarks);
       self.setState({bookmarks:newbookmarks});
 
     }else{
@@ -113,8 +115,6 @@ var App = React.createClass({
     }).catch(function(err){
       console.log(err);
     });
-
-    var getToken;
 
     var getToken = new Promise(function(resolve,reject){
 
@@ -218,6 +218,18 @@ var App = React.createClass({
     var tags = this.state.tagfilters.filter(x => x !== tag);
     this.setState({tagfilters:tags});
   },
+  onFocus:function(e){
+    this.setState({isFilterFocused:true});
+  },
+  onBlur:function(e){
+    this.setState({isFilterFocused:false});
+  },
+  onMouseOver:function(e){
+    this.setState({isFilterHovered:true});
+  },
+  onMouseOut:function(e){
+    this.setState({isFilterHovered:false});
+  },
   putBookmark:function(bm){
 
     var tags = bm.RawTags.split(",").map(x=>x.trim());
@@ -268,12 +280,10 @@ var App = React.createClass({
 
     tag_breakdown.sort((a,b)=>b.count-a.count);
 
-    console.log(tag_breakdown);
-
-    var popular_tags = tag_breakdown.map(x=>{
+    var popular_tags = tag_breakdown.map(x => {
       var onclick = function(e){
         e.preventDefault();
-        self.setFilter(x.tag);
+        self.addFilter(x.tag);
       };
       return (<div key={x.tag} className="tag" onClick={onclick}> {x.tag} </div>);
     });
@@ -282,7 +292,7 @@ var App = React.createClass({
     var bookmarks = this.state.bookmarks;
     var currentPage = this.state.page;
     var currentHeader = this.state.headerpage;
-
+    var currentfilters = self.state.tagfilters;
 
     var githublogin = "";
     var tevs = "";
@@ -291,16 +301,19 @@ var App = React.createClass({
       tevs= <span> | </span>
     }
 
-
-    if (currentFilter.length>0){
+    currentfilters.forEach(function(tag){
       bookmarks = bookmarks.filter(function(bookmark){
-        var matches = bookmark.Tags.map(x=>x.toLowerCase()).filter(x=>x.indexOf(currentFilter)===0);
-        return matches.length>0;
+        var tags = bookmark.Tags;
+        for (var i = 0; i < tags.length; i++){
+          if (tags[i].toLowerCase() === tag){
+            return true;
+          }
+        }        
+        return false;
       });
-    }
+    });
 
     bookmarks.sort((a,b)=>b.Time-a.Time);
-
 
     var content = "";
 
@@ -311,7 +324,7 @@ var App = React.createClass({
       );
       break;
       case "users":
-      content= (<UserSearch userlookup={this.state.userlookup} currentFilter={currentFilter} usernamelookup={this.state.usernamelookup} onsubadded={this.addSub}></UserSearch>);
+      content= (<UserSearch userlookup={this.state.userlookup} currentFilters={self.state.tagfilters} usernamelookup={this.state.usernamelookup} onsubadded={this.addSub}></UserSearch>);
       break;
 
       default:
@@ -378,10 +391,15 @@ var App = React.createClass({
     //<a href="#" onClick={showNewBookmark}>add bookmark</a>
 
     var tagfilters = self.state.tagfilters.map(function(tag){
-      console.log(tag);
       var onclick = function(e){self.removeFilter(tag);};
-      return(<span className="tag" onClick={onclick}>{tag}  {"\u2716"}</span>);
+      return(<span className="tag" key={tag} onClick={onclick}>{tag}  {"\u2716"}</span>);
     });
+
+    var searchColor = "gainsboro";
+
+    if (self.state.isFilterFocused || self.state.isFilterHovered){
+      searchColor = "springgreen";
+    }
 
     return(
       <div>
@@ -395,13 +413,13 @@ var App = React.createClass({
       </div>
 
         <div className="section">
-          <div style={{width:"100%", overflow:"hidden", borderColor:"springgreen", borderStyle:"solid", borderWidth:"0 0 2px 0", margin:"0.6em 0"}}>
+          <div className="linear-transition" style={{width:"100%", overflow:"hidden", borderColor:searchColor, borderStyle:"solid", borderWidth:"0 0 2px 0", margin:"0.6em 0"}}>
             <div style={{float:"left", height:"100%", margin:"0", padding:"0"}}>
               {tagfilters}
 
             </div>
             <div style={{overflow:"hidden"}}>
-              <input style={{borderWidth:"0", margin:"0"}} value={self.state.tagfilter} onChange={self.filterUsers} onKeyDown={self.keyDown} placeholder="tag filter" type="text"/>
+              <input style={{borderWidth:"0", margin:"0"}} value={self.state.tagfilter} onChange={self.filterUsers} onKeyDown={self.keyDown} onFocus={self.onFocus} onMouseOver={self.onMouseOver} onMouseOut={self.onMouseOut} onBlur={self.onBlur} placeholder="tag filter" type="text"/>
             </div>
          </div>
 

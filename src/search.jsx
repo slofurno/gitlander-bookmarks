@@ -13,7 +13,8 @@ module.exports = React.createClass({
     var usernamelookup = this.props.usernamelookup;
     var onsubadded=this.props.onsubadded;
     var users = this.props.userlookup;
-    var tagfilter = this.props.currentFilter.toLowerCase();
+    //var tagfilter = this.props.currentFilter.toLowerCase();
+    var currentfilters = this.props.currentFilters;
 
     console.log(users);
 
@@ -23,6 +24,19 @@ module.exports = React.createClass({
 
     var filteredusers = allusers;
 
+    currentfilters.forEach(function(tag){
+      filteredusers = filteredusers.filter(function(userid){
+        var languages = Object.keys(users[userid]);
+        for (var i = 0; i < languages.length; i++){
+          if (languages[i].toLowerCase() === tag){
+            return true;
+          }
+        }        
+        return false;
+      });
+    });
+
+/*
     if (tagfilter!=""){
       filteredusers=filteredusers.filter(function(userid){
         var languages = Object.keys(users[userid]);
@@ -32,6 +46,7 @@ module.exports = React.createClass({
         return matches.length>0;
       });
     }
+    */
 
     var usersummaries = filteredusers.map(function(userid){
       console.log("userid",userid);
@@ -70,7 +85,7 @@ module.exports = React.createClass({
             width:scale+"%"
         };
 
-        return <div className="bargraph" style={style}>{language}</div>
+        return <div key={language} className="bargraph" style={style}>{language}</div>
 
       });
 
