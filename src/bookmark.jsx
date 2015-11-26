@@ -94,7 +94,7 @@ module.exports = React.createClass({
       }
     }
 
-    return (<div className="bookmark raised" style={{width:"360px", margin:"0 2px 2px 0", padding:"1em"}}>
+    return (<div className="bookmark raised" style={{width:"360px", margin:"0 6px 6px 0", padding:"1em"}}>
              {contents}
               <div>
                 {tags} {agemessage}
