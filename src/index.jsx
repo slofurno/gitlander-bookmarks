@@ -396,9 +396,11 @@ var App = React.createClass({
     });
 
     var searchColor = "gainsboro";
+    var inputStyle = "input";
 
     if (self.state.isFilterFocused || self.state.isFilterHovered){
       searchColor = "springgreen";
+      inputStyle = "input active";
     }
 
     return(
@@ -413,7 +415,7 @@ var App = React.createClass({
       </div>
 
         <div className="section">
-          <div className="linear-transition" style={{width:"100%", overflow:"hidden", borderColor:searchColor, borderStyle:"solid", borderWidth:"0 0 2px 0", margin:"0.6em 0"}}>
+          <div className={inputStyle} style={{width:"100%", overflow:"hidden", padding:"0"}}>
             <div style={{float:"left", height:"100%", margin:"0", padding:"0"}}>
               {tagfilters}
 

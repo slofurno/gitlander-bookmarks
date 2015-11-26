@@ -114,6 +114,30 @@ input:hover, input:focus, input:active{
   border-color:springgreen;
 }
 
+.input {
+  padding:0.8em 0.6em;
+  margin: 0.6em 0;
+  width:100%;
+  color:hsl(220, 14%, 71%);
+  background-color: hsl(220,13%,18%);
+  outline: none;
+  /*border:2px solid hsl(220, 14%, 50%);*/
+
+  border-color: hsl(220, 14%, 50%);
+  border-style:solid;
+  border-width: 0 0 2px 0;
+
+  -webkit-transition: border-color .5s;
+  -moz-transition: border-color .5s;
+  -ms-transition: border-color .5s;
+  -o-transition: border-color .5s;
+  transition: border-color .5s;
+}
+
+.input.active {
+  border-color:springgreen;
+}
+
 .tag{
   display:inline-block;
   background-color:hsl(220, 14%, 71%);
