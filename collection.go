@@ -78,7 +78,7 @@ func (c *Collection) Add(key string, value interface{}) {
 	c.events <- add
 }
 
-//TODO: only expose upsert
+//TODO: only expose upsert?
 func (c *Collection) Update(key string, value interface{}) {
 	c.Add(key, value)
 }
@@ -87,8 +87,8 @@ func (c *Collection) Remove(key string, value interface{}) {
 
 }
 
+//fetch + observe
 func (c *Collection) ObserveChanges(callback *Callback) func() {
-
 	//TODO:instead of n calls on subscribe, maybe 1 call with n elements
 	add := func() {
 		for key, el := range c.store {

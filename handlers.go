@@ -60,7 +60,6 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 }
 
 func websocketHandler(w http.ResponseWriter, req *http.Request, context *RequestContext) {
-	fmt.Println(globalSummary)
 
 	if !context.isAuthed {
 		w.WriteHeader(http.StatusUnauthorized)

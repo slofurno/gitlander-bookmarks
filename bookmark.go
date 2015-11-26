@@ -116,6 +116,7 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 	subremoved := func(key string, value interface{}) {
 		if onstop, ok := self.handles[key]; ok {
 			fmt.Println("unsubbed from: ", key)
+			//TODO: probably delete onstop from map / use closure
 			onstop()
 		}
 	}
