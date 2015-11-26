@@ -70,8 +70,8 @@ module.exports = React.createClass({
 
     if (self.state.isEditing){
       contents = (<div style={{height:"20em", overflowY:"hidden"}}>
-                  <input type="text" value={self.state.Description} onChange={self.updateDescription}></input>
                   <input type="text" value={self.state.Url} onChange={self.updateUrl}></input>
+                  <input type="text" value={self.state.Description} onChange={self.updateDescription}></input>
                   <input type="text" value={self.state.Tags} onChange={self.updateTags}></input>
                  </div>);
       owner = (<div>
