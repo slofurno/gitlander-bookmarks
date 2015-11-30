@@ -90,6 +90,13 @@ func makeUuid() string {
 	return u.String()
 }
 
+func hashToken(uuid string) string {
+	mac := hmac.New(sha256.New, secretKey)
+	mac.Write([]byte(uuid))
+	b := mac.Sum(nil)
+	return base32.StdEncoding.EncodeToString(b)
+}
+
 func init() {
 	var err error
 	cj, err := ioutil.ReadFile("secret/clientsecrets")
