@@ -102,6 +102,7 @@ func init() {
 	cj, err := ioutil.ReadFile("secret/clientsecrets")
 
 	if err != nil {
+		fmt.Println("error reading clientsecrets")
 		panic(err.Error())
 	}
 
@@ -109,7 +110,8 @@ func init() {
 	err = json.Unmarshal(cj, clientsecrets)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("error unmarshall clientsecret")
+		panic(err.Error())
 	}
 
 	client_secret = clientsecrets.Client_secret
@@ -119,6 +121,12 @@ func init() {
 	if err != nil {
 		panic("i need the secret key")
 	}
+
+	//somehow account for trailing newline
+	if secretKey[len(secretKey)-1] == 10 {
+		secretKey = secretKey[:len(secretKey)-1]
+	}
+	fmt.Println(secretKey)
 
 	scanner := bufio.NewScanner(database.Fd)
 	scanner.Split(bufio.ScanLines)
@@ -163,6 +171,7 @@ func init() {
 
 func main() {
 
+	fmt.Println(hashToken("beaabad2-03ad-4d2d-4486-e891456363d5"))
 	http.HandleFunc("/api/summary", summaryHandler)
 	http.HandleFunc("/api/img/", authed(imgHandler))
 	http.HandleFunc("/ws", authed(websocketHandler))
@@ -196,6 +205,7 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 		}
 
 		if userid != "" && token != "" {
+			fmt.Println("userid", userid, "token", token)
 
 			var githubid string
 			var user *userInfo

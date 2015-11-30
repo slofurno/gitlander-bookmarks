@@ -142,11 +142,12 @@ var App = React.createClass({
       console.log("logging in as:", result.user+":"+result.token);
 
       var ws;
+      var protocol = location.protocol === "http:" ? "ws:" : "wss:";
 
-      if (self.state.hostname==="localhost"){
+      if (location.hostname==="localhost"){
         ws = new WebSocket("ws://"+ self.state.hostname +":555/ws?user="+result.user+"&token="+result.token);
       }else{
-        ws = new WebSocket("wss://"+ self.state.hostname +"/ws?user="+result.user+"&token="+result.token);
+        ws = new WebSocket(protocol + "//"+ location.host +"/ws?user="+result.user+"&token="+result.token);
       }
       
 
