@@ -8,3 +8,7 @@
 test.db
 static/*.js
 /secret
+*.log
+*.swp
+*.swo
+*~
