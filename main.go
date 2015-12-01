@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base32"
@@ -23,6 +24,7 @@ var client_secret string
 
 var globalSummary = map[string]int{}
 
+var database = NewFilebase("test.db")
 var db struct {
 	bookmarks     *Filebase
 	subscriptions *Filebase
@@ -100,6 +102,50 @@ func hashToken(uuid string) string {
 	mac.Write([]byte(uuid))
 	b := mac.Sum(nil)
 	return base32.StdEncoding.EncodeToString(b)
+}
+
+func migrateDatabase() {
+	scanner := bufio.NewScanner(database.Fd)
+	scanner.Split(bufio.ScanLines)
+
+	db.init = true
+	for scanner.Scan() {
+		du := &DataUnion{}
+		b := scanner.Bytes()
+		err := json.Unmarshal(b, du)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			fmt.Println("bad json:", string(b))
+			continue
+		}
+
+		var userinfo *userInfo
+		var ok bool
+		userid := du.UserId
+
+		if userinfo, ok = userInfos[userid]; !ok {
+			userinfo = newUserInfo()
+			userinfo.userid = du.UserId
+
+			fmt.Println("regen user", userinfo.userid)
+			dataStore.AddUser(userinfo, du.Token)
+
+			userinfo.subscriptions.Add(userid, userid)
+			userInfos[userid] = userinfo
+		}
+
+		if du.Bookmark != nil {
+			dataStore.UpsertBookmark(userinfo, du.Bookmark)
+		} else if du.Sub != "" {
+			dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
+		} else {
+			userTokens[du.Token] = du.UserId
+			userinfo.name = du.Name
+		}
+	}
+
+	db.init = false
 }
 
 func init() {
