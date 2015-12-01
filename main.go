@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base32"
@@ -17,13 +16,19 @@ var userTokens = map[string]string{}
 var userInfos = map[string]*userInfo{}
 
 var secretKey []byte
-var database = newFilebase("test.db")
 var dataStore = &DataStore{}
 
 var client_id string
 var client_secret string
 
 var globalSummary = map[string]int{}
+
+var db struct {
+	bookmarks     *Filebase
+	subscriptions *Filebase
+	users         *Filebase
+	init          bool
+}
 
 type clientSecrets struct {
 	Client_id     string
@@ -98,6 +103,11 @@ func hashToken(uuid string) string {
 }
 
 func init() {
+
+	db.bookmarks = NewFilebase("bookmarks.db")
+	db.users = NewFilebase("users.db")
+	db.subscriptions = NewFilebase("subscriptions.db")
+
 	var err error
 	cj, err := ioutil.ReadFile("secret/clientsecrets")
 
@@ -128,18 +138,12 @@ func init() {
 	}
 	fmt.Println(secretKey)
 
-	scanner := bufio.NewScanner(database.Fd)
-	scanner.Split(bufio.ScanLines)
-
-	for scanner.Scan() {
+	readuser := func(b []byte) {
 		du := &DataUnion{}
-		b := scanner.Bytes()
 		err := json.Unmarshal(b, du)
 
 		if err != nil {
-			fmt.Println(err.Error())
-			fmt.Println("bad json:", string(b))
-			continue
+			return
 		}
 
 		var userinfo *userInfo
@@ -149,24 +153,41 @@ func init() {
 		if userinfo, ok = userInfos[userid]; !ok {
 			userinfo = newUserInfo()
 			userinfo.userid = du.UserId
-			fmt.Println("regen user", userinfo.userid)
-			userinfo.subscriptions.Add(userid, userid)
-			userInfos[userid] = userinfo
+
+			dataStore.AddUser(userinfo, du.Token)
 		}
 
-		if du.Bookmark != nil {
-			dataStore.AddBookmark(userinfo, du.Bookmark)
-		} else if du.Sub != "" {
-			dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
-		} else {
-			userTokens[du.Token] = du.UserId
-			userinfo.name = du.Name
-		}
-
+		userinfo.name = du.Name
 	}
 
-	//TODO: idk; by reusing the same datastore functions, we were rewriting everything we read
-	database.Pls = true
+	readsubscripions := func(b []byte) {
+		du := &DataUnion{}
+		err := json.Unmarshal(b, du)
+
+		if err != nil {
+			return
+		}
+
+		userinfo := userInfos[du.UserId]
+		dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
+	}
+
+	readbookmark := func(b []byte) {
+		du := &DataUnion{}
+		err := json.Unmarshal(b, du)
+
+		if err != nil {
+			return
+		}
+
+		userinfo := userInfos[du.UserId]
+		dataStore.UpsertBookmark(userinfo, du.Bookmark)
+	}
+
+	db.users.ReadRecords(readuser)
+	db.subscriptions.ReadRecords(readsubscripions)
+	db.bookmarks.ReadRecords(readbookmark)
+	db.init = true
 }
 
 func main() {

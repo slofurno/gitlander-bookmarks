@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -18,10 +19,11 @@ type entry struct {
 	Data string
 }
 
-func newFilebase(filename string) *Filebase {
+func NewFilebase(filename string) *Filebase {
 	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println(err.Error())
+		panic(err.Error())
 	}
 
 	db := &Filebase{
@@ -50,8 +52,14 @@ func (db *Filebase) initWorker() {
 }
 
 func (db *Filebase) WriteRecord(b []byte) {
-	if !db.Pls {
-		return
-	}
 	db.Inbox <- b
+}
+
+func (db *Filebase) ReadRecords(f func([]byte)) {
+	scanner := bufio.NewScanner(db.Fd)
+	scanner.Split(bufio.ScanLines)
+
+	for scanner.Scan() {
+		f(scanner.Bytes())
+	}
 }

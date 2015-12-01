@@ -5,7 +5,7 @@
 
 /node_modules
 *.exe
-test.db
+*.db
 static/*.js
 /secret
 *.log

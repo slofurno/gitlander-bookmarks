@@ -55,7 +55,7 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 		Summary:     string(content),
 	}
 
-	dataStore.AddBookmark(context.userinfo, bookmark)
+	dataStore.UpsertBookmark(context.userinfo, bookmark)
 	fmt.Fprintln(w, bookmark.Id)
 }
 
@@ -229,13 +229,13 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 		//TODO: replace with survey w/ timeout?
 		resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
 
-		defer resp.Body.Close()
-
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 
+		//code duplication is bad
+		defer resp.Body.Close()
 		content, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
@@ -253,7 +253,7 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			Summary:     string(content),
 		}
 
-		dataStore.AddBookmark(context.userinfo, bookmark)
+		dataStore.UpsertBookmark(context.userinfo, bookmark)
 		w.WriteHeader(http.StatusOK)
 
 	case "POST":
@@ -296,7 +296,7 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			Summary:     string(content),
 		}
 
-		dataStore.AddBookmark(context.userinfo, bookmark)
+		dataStore.UpsertBookmark(context.userinfo, bookmark)
 		fmt.Fprintln(w, bookmark.Id)
 	case "GET":
 		userid := r.URL.Query().Get("id")

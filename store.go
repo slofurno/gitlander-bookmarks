@@ -16,7 +16,8 @@ type DataUnion struct {
 type DataStore struct {
 }
 
-func (s *DataStore) AddBookmark(userinfo *userInfo, bookmark *Bookmark) {
+//TODO move dup code from handler here
+func (s *DataStore) UpsertBookmark(userinfo *userInfo, bookmark *Bookmark) {
 
 	//TODO:if we update bookmarks here were gonna dup tags
 	for _, tag := range bookmark.Tags {
@@ -34,7 +35,10 @@ func (s *DataStore) AddBookmark(userinfo *userInfo, bookmark *Bookmark) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	database.WriteRecord(b)
+
+	if db.init {
+		db.bookmarks.WriteRecord(b)
+	}
 
 }
 
@@ -57,7 +61,10 @@ func (s *DataStore) AddUser(userinfo *userInfo, token string) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	database.WriteRecord(b)
+
+	if db.init {
+		db.users.WriteRecord(b)
+	}
 
 }
 
@@ -76,5 +83,7 @@ func (s *DataStore) AddSubscription(userinfo *userInfo, sub string, name string)
 		fmt.Println(err.Error())
 	}
 
-	database.WriteRecord(b)
+	if db.init {
+		db.subscriptions.WriteRecord(b)
+	}
 }
