@@ -85,6 +85,19 @@ func (c *Collection) Update(key string, value interface{}) {
 
 func (c *Collection) Remove(key string, value interface{}) {
 
+	rem := func() {
+		var ok bool
+
+		if _, ok = c.store[key]; ok {
+			delete(c.store, key)
+			for _, f := range c.callbacks {
+				f.removed(key, value)
+			}
+		}
+
+	}
+
+	c.events <- rem
 }
 
 //fetch + observe

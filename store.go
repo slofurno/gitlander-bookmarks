@@ -68,6 +68,11 @@ func (s *DataStore) AddUser(userinfo *userInfo, token string) {
 
 }
 
+func (s *DataStore) DeleteSubscription(userinfo *userInfo, sub string) {
+	userinfo.subscriptions.Remove(sub, sub)
+
+}
+
 //TODO: prolly need a real type instead of storing sub name
 func (s *DataStore) AddSubscription(userinfo *userInfo, sub string, name string) {
 

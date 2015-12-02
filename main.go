@@ -199,11 +199,11 @@ func init() {
 		if userinfo, ok = userInfos[userid]; !ok {
 			userinfo = newUserInfo()
 			userinfo.userid = du.UserId
+			userinfo.name = du.Name
 
 			dataStore.AddUser(userinfo, du.Token)
 		}
 
-		userinfo.name = du.Name
 	}
 
 	readSubscription := func(b []byte) {

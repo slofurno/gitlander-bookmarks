@@ -12,6 +12,7 @@ module.exports = React.createClass({
 
     var usernamelookup = this.props.usernamelookup;
     var onsubadded=this.props.onsubadded;
+    var onsubdeleted=this.props.onsubdeleted;
     var users = this.props.userlookup;
     //var tagfilter = this.props.currentFilter.toLowerCase();
     var currentfilters = this.props.currentFilters;
@@ -93,9 +94,14 @@ module.exports = React.createClass({
         onsubadded(userid);
       };
 
+      var deleteme = function(e){
+        onsubdeleted(userid);
+      };
+
       return(
       <div key={userid} className="bookmark raised" style={{width:"360px", margin:"0 2px 2px 0", padding:"1em"}}>
         <div style={{height:"20em", overflowY:"hidden"}}>
+          <button className="raised float-right" type="button" onClick={deleteme}>unsubscribe!</button>
           <button className="raised float-right" type="button" onClick={addme}>subscribe!</button>
           <div style={{"padding":"1em 0"}}>
             {userName}

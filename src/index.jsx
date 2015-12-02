@@ -30,7 +30,6 @@ var code = qs["code"];
 
 var App = React.createClass({
   getInitialState: function() {
-    console.log("getInitialState");
     var hostname=location.hostname;
     if (hostname===""){
       hostname="localhost";
@@ -40,6 +39,7 @@ var App = React.createClass({
       user:storedid,
       token:storedtoken,
       bookmarks:[],
+      subscriptions:[],
       hostname:hostname,
       userlookup:{},
       usernamelookup:{},
@@ -68,6 +68,20 @@ var App = React.createClass({
     });
 
   },
+  deleteSub:function(e){
+    var options={
+      headers:{Authorization:this.state.user+":"+this.state.token},
+      params:{follow:e},
+      method:"DELETE"
+    };
+
+    client.post("/api/follow","",options).then(function(result){
+      console.log("followed", result);
+    }).catch(function(err){
+      console.log(err);
+    });
+
+  },
   setPage:function(e,page){
 
     e.preventDefault();
@@ -78,10 +92,27 @@ var App = React.createClass({
     var update = JSON.parse(e.data);
     //console.log("update rec", update);
 
+    if (update.Type === "sub"){
+        var id = update.Data;
+        var subs = self.state.subscriptions;
+
+        if (update.Op === "add"){
+            subs.push(id);
+        }
+
+        if (update.Op === "delete"){
+            subs = subs.filter(x => x !== id);
+        }
+
+        console.log(subs);
+
+        self.setState({subscriptions:subs});
+        return
+    }
+
     if (typeof(update.Name)==="undefined"){
       var newbookmarks = self.state.bookmarks.filter(b => b.Id !== update.Id);
 
-      console.log(update.Url);
       if (update.Url !== ""){
           newbookmarks.push(update);
       }
@@ -95,7 +126,6 @@ var App = React.createClass({
     }
   },
   componentDidMount: function() {
-    console.log("componentDidMount");
     var self = this;
 
     client.get("/api/summary").then(function(result){
@@ -298,6 +328,7 @@ var App = React.createClass({
     var currentPage = this.state.page;
     var currentHeader = this.state.headerpage;
     var currentfilters = self.state.tagfilters;
+    var subscriptions = self.state.subscriptions;
 
     var githublogin = "";
     var tevs = "";
@@ -305,6 +336,11 @@ var App = React.createClass({
       githublogin = <a href="https://github.com/login/oauth/authorize?client_id=f584faa0641263aab644">{"login through github"}</a>
       tevs= <span> | </span>
     }
+
+    bookmarks = bookmarks.filter(function(bookmark){
+        var matchingSubs = subscriptions.filter(x=>x == bookmark.Owner);
+        return matchingSubs.length>0;
+    });
 
     currentfilters.forEach(function(tag){
       bookmarks = bookmarks.filter(function(bookmark){
@@ -329,7 +365,7 @@ var App = React.createClass({
       );
       break;
       case "users":
-      content= (<UserSearch userlookup={this.state.userlookup} currentFilters={self.state.tagfilters} usernamelookup={this.state.usernamelookup} onsubadded={this.addSub}></UserSearch>);
+      content= (<UserSearch userlookup={this.state.userlookup} currentFilters={self.state.tagfilters} usernamelookup={this.state.usernamelookup} onsubadded={this.addSub} onsubdeleted = {this.deleteSub}></UserSearch>);
       break;
 
       default:

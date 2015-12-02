@@ -104,7 +104,14 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 		return
 	}
 
-	dataStore.AddSubscription(context.userinfo, sub, subinfo.name)
+	switch r.Method {
+	case "DELETE":
+		dataStore.DeleteSubscription(context.userinfo, sub)
+	case "POST":
+		dataStore.AddSubscription(context.userinfo, sub, subinfo.name)
+
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

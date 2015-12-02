@@ -45,6 +45,8 @@ var httpClient = function httpClient(){
 	var Post = function(uri,body,options){
 		body=body||"";
 		options=options||{};
+        var method = options.method || "POST";
+
 		var promise = new Promise( function (resolve, reject) {
 			var client = new XMLHttpRequest();
 
@@ -60,7 +62,7 @@ var httpClient = function httpClient(){
 				});
 			}
 
-			client.open("POST",uri);
+			client.open(method, uri);
 
 			if (typeof(options.headers)==="object"){
 				Object.keys(options.headers).forEach(function(key){

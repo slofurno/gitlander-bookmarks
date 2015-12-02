@@ -49,6 +49,19 @@ type Bookmark struct {
 	Time        int64
 }
 
+type BookmarkOp string
+
+const (
+	Add    BookmarkOp = "add"
+	Delete BookmarkOp = "delete"
+)
+
+type BookmarkEvent struct {
+	Type string
+	Op   string
+	Data string
+}
+
 func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection {
 
 	self := &UserConnection{subscriptions: userSubs, handles: map[string]func(){}, socket: socket}
@@ -63,10 +76,21 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 			return
 		}
 
-		tevs := &userinfoDto{Name: userinfo.name, Userid: key}
-
-		jj, _ := json.Marshal(tevs)
+		//TODO find another way to get user info
+		newsub := &userinfoDto{Name: userinfo.name, Userid: key}
+		fmt.Println("sub:", userinfo.name, key)
+		jj, _ := json.Marshal(newsub)
 		socket.Write(jj)
+
+		event := &BookmarkEvent{Type: "sub", Op: "add", Data: key}
+
+		tevs, err := json.Marshal(event)
+
+		if err != nil {
+			fmt.Println(err.Error())
+		} else {
+			socket.Write(tevs)
+		}
 
 		added := func(key string, value interface{}) {
 			bookmark, ok := value.(*Bookmark)
@@ -87,7 +111,6 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 		changed := func(key string, value interface{}, old interface{}) {
 			bookmark, ok := value.(*Bookmark)
 			if !ok {
-				fmt.Println("how is this not a bookmark?")
 				return
 			}
 
@@ -119,6 +142,20 @@ func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection 
 			//TODO: probably delete onstop from map / use closure
 			onstop()
 		}
+
+		//oldsub := &userinfoDto{Userid: key}
+		//zz, err := json.Marshal(oldsub)
+
+		event := &BookmarkEvent{Type: "sub", Op: "delete", Data: key}
+
+		j, err := json.Marshal(event)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		socket.Write(j)
 	}
 
 	subcallback := &Callback{subadded, subchanged, subremoved}
