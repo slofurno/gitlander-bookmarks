@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gitlander.com/slofurno/ws"
+	"github.com/slofurno/ws"
 	"time"
 )
 

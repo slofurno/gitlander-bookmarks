@@ -7,7 +7,7 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
-	"gitlander.com/slofurno/ws"
+	"github.com/slofurno/ws"
 	"io/ioutil"
 	"net/http"
 	"net/url"
