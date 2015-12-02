@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gitlander.com/slofurno/ws"
 	"time"
 )
 
@@ -36,7 +37,7 @@ type UserConnection struct {
 	subscriptions *Collection
 	onstop        func()
 	outbox        chan []byte
-	socket        *WebSocket
+	socket        *ws.WebSocket
 }
 
 type Bookmark struct {
@@ -62,7 +63,7 @@ type BookmarkEvent struct {
 	Data string
 }
 
-func newUserConnection(userSubs *Collection, socket *WebSocket) *UserConnection {
+func newUserConnection(userSubs *Collection, socket *ws.WebSocket) *UserConnection {
 
 	self := &UserConnection{subscriptions: userSubs, handles: map[string]func(){}, socket: socket}
 

@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
+	"gitlander.com/slofurno/ws"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -67,20 +68,22 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 		return
 	}
 
-	ws := upgrade(w, req)
+	sock := ws.Upgrade(w, req)
 
-	connection := newUserConnection(context.userinfo.subscriptions, ws)
+	connection := newUserConnection(context.userinfo.subscriptions, sock)
 	defer connection.onstop()
 
 	func() {
 		for {
-			read, code, err := ws.Read()
-			if err != nil || code == Close {
+			read, code, err := sock.Read()
+			if err != nil || code == ws.Close {
 				return
 			}
 			fmt.Println(read)
 		}
 	}()
+
+	sock.Close()
 
 	fmt.Println("disconnected")
 }

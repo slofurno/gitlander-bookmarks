@@ -12,6 +12,7 @@ type Collection struct {
 	store     map[string]interface{}
 	callbacks []*Callback
 	events    chan collectionEvent
+	close     chan bool
 }
 
 func newCollection() *Collection {
@@ -19,6 +20,7 @@ func newCollection() *Collection {
 		store:     make(map[string]interface{}),
 		callbacks: make([]*Callback, 0),
 		events:    make(chan collectionEvent, 256),
+		close:     make(chan bool),
 	}
 
 	go c.eventLoop()
@@ -32,6 +34,9 @@ func (c *Collection) eventLoop() {
 		select {
 		case f := <-c.events:
 			f()
+
+		case <-c.close:
+			break
 		}
 	}
 
