@@ -8,6 +8,11 @@ module.exports = React.createClass({
   componentDidMount:function(){
 
   },
+  deleteBookmark: function(e){
+    e.preventDefault();
+    this.props.putBookmark({Id: this.props.bookmark.Id, Url:"", Description:"", RawTags:""});
+    this.replaceState({isEditing:false});
+  },
   saveEdit:function(e){
     e.preventDefault();
 
@@ -75,6 +80,8 @@ module.exports = React.createClass({
                   <input type="text" value={self.state.Tags} onChange={self.updateTags}></input>
                  </div>);
       owner = (<div>
+                <a href="#" onClick={self.deleteBookmark}>Delete</a>
+                <span> | </span>
                 <a href="#" onClick={self.saveEdit}>Save</a>
                 <span> | </span>
                 <a href="#" onClick={self.cancelEdit}>Cancel</a>

@@ -206,7 +206,7 @@ func init() {
 		userinfo.name = du.Name
 	}
 
-	readsubscripions := func(b []byte) {
+	readSubscription := func(b []byte) {
 		du := &DataUnion{}
 		err := json.Unmarshal(b, du)
 
@@ -231,7 +231,7 @@ func init() {
 	}
 
 	db.users.ReadRecords(readuser)
-	db.subscriptions.ReadRecords(readsubscripions)
+	db.subscriptions.ReadRecords(readSubscription)
 	db.bookmarks.ReadRecords(readbookmark)
 	db.init = true
 }

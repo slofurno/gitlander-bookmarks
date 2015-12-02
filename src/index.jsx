@@ -80,7 +80,11 @@ var App = React.createClass({
 
     if (typeof(update.Name)==="undefined"){
       var newbookmarks = self.state.bookmarks.filter(b => b.Id !== update.Id);
-      newbookmarks.push(update);
+
+      console.log(update.Url);
+      if (update.Url !== ""){
+          newbookmarks.push(update);
+      }
       //console.log("update:", update.Id, newbookmarks);
       self.setState({bookmarks:newbookmarks});
 
@@ -233,7 +237,7 @@ var App = React.createClass({
   },
   putBookmark:function(bm){
 
-    var tags = bm.RawTags.split(",").map(x=>x.trim());
+    var tags = bm.RawTags ? bm.RawTags.split(",").map(x=>x.trim()) : [];
     var bookmark = {id: bm.Id, url: bm.Url, tags:tags, description:bm.Description};
 
     console.log("putting bookmark:", bookmark);

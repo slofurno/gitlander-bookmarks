@@ -205,8 +205,36 @@ func summaryHandler(w http.ResponseWriter, rep *http.Request) {
 func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
 
 	method := r.Method
+	var err error
 
 	switch method {
+
+	case "DELETE":
+		if !context.isAuthed {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		b, _ := ioutil.ReadAll(r.Body)
+		br := &BookmarkRequest{}
+		err := json.Unmarshal(b, br)
+
+		if err != nil {
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+
+		bookmark := &Bookmark{
+			Id:          br.Id,
+			Url:         br.Url,
+			Description: br.Description,
+			Tags:        br.Tags,
+			Owner:       context.userinfo.userid,
+			Time:        getCurrentTime(),
+		}
+
+		dataStore.UpsertBookmark(context.userinfo, bookmark)
+		w.WriteHeader(http.StatusOK)
 
 	case "PUT":
 
@@ -216,31 +244,35 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 		}
 
 		b, _ := ioutil.ReadAll(r.Body)
-
 		br := &BookmarkRequest{}
-		err := json.Unmarshal(b, br)
+		err = json.Unmarshal(b, br)
 
 		if err != nil {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}
 
-		buf := []byte(br.Url)
-		//TODO: replace with survey w/ timeout?
-		resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
+		var content []byte
 
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
+		if len(br.Url) > 4 {
 
-		//code duplication is bad
-		defer resp.Body.Close()
-		content, err := ioutil.ReadAll(resp.Body)
+			buf := []byte(br.Url)
+			//TODO: replace with survey w/ timeout?
+			resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
 
-		if err != nil {
-			fmt.Println(err.Error())
-			return
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+
+			//code duplication is bad
+			defer resp.Body.Close()
+			content, err = ioutil.ReadAll(resp.Body)
+
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
 		}
 
 		bookmark := &Bookmark{
@@ -299,6 +331,7 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 		dataStore.UpsertBookmark(context.userinfo, bookmark)
 		fmt.Fprintln(w, bookmark.Id)
 	case "GET":
+		fmt.Println("when am i calling this?")
 		userid := r.URL.Query().Get("id")
 
 		if userid == "" {
