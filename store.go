@@ -11,6 +11,7 @@ type DataUnion struct {
 	Sub      string
 	Token    string
 	Name     string
+	Op       string
 }
 
 type DataStore struct {
@@ -71,6 +72,21 @@ func (s *DataStore) AddUser(userinfo *userInfo, token string) {
 func (s *DataStore) DeleteSubscription(userinfo *userInfo, sub string) {
 	userinfo.subscriptions.Remove(sub, sub)
 
+	data := &DataUnion{
+		UserId: userinfo.userid,
+		Sub:    sub,
+		Op:     "delete",
+	}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	if db.init {
+		db.subscriptions.WriteRecord(b)
+	}
+
 }
 
 //TODO: prolly need a real type instead of storing sub name
@@ -81,6 +97,7 @@ func (s *DataStore) AddSubscription(userinfo *userInfo, sub string, name string)
 	data := &DataUnion{
 		UserId: userinfo.userid,
 		Sub:    sub,
+		Op:     "add",
 	}
 
 	b, err := json.Marshal(data)

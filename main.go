@@ -215,7 +215,12 @@ func init() {
 		}
 
 		userinfo := userInfos[du.UserId]
-		dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
+
+		if du.Op == "add" {
+			dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
+		} else {
+			dataStore.DeleteSubscription(userinfo, du.Sub)
+		}
 	}
 
 	readbookmark := func(b []byte) {
