@@ -5,12 +5,6 @@ import (
 	"sync"
 )
 
-type InsertRequest struct {
-	Key   []byte
-	Value []byte
-	Time  int64
-}
-
 type Tuple struct {
 	Time  int64
 	Key   []byte

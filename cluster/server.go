@@ -76,6 +76,7 @@ func insert(res http.ResponseWriter, req *http.Request) {
 	}
 
 	collection := store.Get(col)
+	//TODO: use update for everything?
 	collection.Update(item)
 
 	ok := []byte("ADD")
@@ -155,7 +156,7 @@ func listen(args []string) {
 	}
 }
 
-//http, pub, bus
+//args: name, http, pub, [bus ips]
 func main() {
 
 	args := os.Args
