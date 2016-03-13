@@ -8,6 +8,8 @@ import (
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/gorilla/mux"
 	"github.com/slofurno/bookmarks/collection"
+	"github.com/slofurno/bookmarks/filebase"
+
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,14 +17,14 @@ import (
 	"time"
 )
 
-func getCurrentTime() int64 {
-	nanos := time.Now().UnixNano()
-	return nanos / 1000000
-}
-
 type concurrentMap struct {
 	m    map[string]collection.Collection
 	lock *sync.Mutex
+}
+
+type record struct {
+	Topic string
+	Tuple []byte
 }
 
 func (s *concurrentMap) Get(key string) collection.Collection {
@@ -42,6 +44,7 @@ func (s *concurrentMap) Get(key string) collection.Collection {
 var store *concurrentMap
 var outbox chan []byte
 var inbox chan []byte
+var db *filebase.Filebase
 
 func init() {
 	store = &concurrentMap{
@@ -60,7 +63,22 @@ func assert(err error) {
 	}
 }
 
-func insert(res http.ResponseWriter, req *http.Request) {
+func insert(key string, payload []byte) error {
+
+	item := &collection.Tuple{}
+	err := json.Unmarshal(payload, item)
+
+	if err != nil {
+		return err
+	}
+
+	collection := store.Get(key)
+	collection.Update(item)
+
+	return nil
+}
+
+func postTuple(res http.ResponseWriter, req *http.Request) {
 	fmt.Println("insert called")
 	vars := mux.Vars(req)
 	col := vars["collection"]
@@ -74,6 +92,14 @@ func insert(res http.ResponseWriter, req *http.Request) {
 		fmt.Println(err.Error())
 		return
 	}
+
+	r := &record{
+		Topic: col,
+		Tuple: body,
+	}
+
+	fb, _ := json.Marshal(r)
+	db.WriteRecord(fb)
 
 	collection := store.Get(col)
 	//TODO: use update for everything?
@@ -115,18 +141,18 @@ func listen(args []string) {
 	publish, _ := pub.NewSocket()
 	publish.AddTransport(tcp.NewTransport())
 
-	assert(publish.Listen(args[2]))
+	assert(publish.Listen(args[3]))
 	//"tcp://:11400"
 	sock, err := bus.NewSocket()
 
 	assert(err)
 
 	sock.AddTransport(tcp.NewTransport())
-	assert(sock.Listen(args[3]))
+	assert(sock.Listen(args[4]))
 
 	time.Sleep(time.Second)
 
-	for _, ad := range args[4:] {
+	for _, ad := range args[5:] {
 		assert(sock.Dial(ad))
 		fmt.Println("dialed", ad)
 	}
@@ -160,6 +186,23 @@ func listen(args []string) {
 func main() {
 
 	args := os.Args
+	db = filebase.New(args[1] + ".log")
+
+	reinsert := func(line []byte) {
+		rec := &record{}
+		err := json.Unmarshal(line, rec)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		insert(rec.Topic, rec.Tuple)
+	}
+
+	fmt.Println("reading log...")
+	db.ReadRecords(reinsert)
+	fmt.Println("done")
 
 	fmt.Println(args)
 	go listen(args)
@@ -167,12 +210,12 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/{collection}", insert).Methods("POST")
+	r.HandleFunc("/{collection}", postTuple).Methods("POST")
 	r.HandleFunc("/{collection}", getAll).Methods("GET")
 	r.HandleFunc("/{collection}", delete).Methods("DELETE")
 
 	//11411
-	fmt.Println("api running on", args[1])
-	assert(http.ListenAndServe(args[1], r))
+	fmt.Println("api running on", args[2])
+	assert(http.ListenAndServe(args[2], r))
 
 }
