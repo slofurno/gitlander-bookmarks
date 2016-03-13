@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/slofurno/bookmarks/collection"
 	"github.com/slofurno/bookmarks/filebase"
-
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -30,7 +29,6 @@ type record struct {
 func (s *concurrentMap) Get(key string) collection.Collection {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-
 	c, ok := s.m[key]
 
 	if !ok {
@@ -64,7 +62,6 @@ func assert(err error) {
 }
 
 func insert(key string, payload []byte) error {
-
 	item := &collection.Tuple{}
 	err := json.Unmarshal(payload, item)
 
@@ -74,7 +71,6 @@ func insert(key string, payload []byte) error {
 
 	collection := store.Get(key)
 	collection.Update(item)
-
 	return nil
 }
 
@@ -84,7 +80,6 @@ func postTuple(res http.ResponseWriter, req *http.Request) {
 	col := vars["collection"]
 
 	item := &collection.Tuple{}
-
 	body, _ := ioutil.ReadAll(req.Body)
 	err := json.Unmarshal(body, item)
 
@@ -132,21 +127,13 @@ func delete(res http.ResponseWriter, req *http.Request) {
 	//key := vars["key"]
 }
 
-func publish(args []string) {
-
-}
-
 func listen(args []string) {
-
 	publish, _ := pub.NewSocket()
 	publish.AddTransport(tcp.NewTransport())
-
 	assert(publish.Listen(args[3]))
 	//"tcp://:11400"
 	sock, err := bus.NewSocket()
-
 	assert(err)
-
 	sock.AddTransport(tcp.NewTransport())
 	assert(sock.Listen(args[4]))
 
@@ -184,7 +171,6 @@ func listen(args []string) {
 
 //args: name, http, pub, [bus ips]
 func main() {
-
 	args := os.Args
 	db = filebase.New(args[1] + ".log")
 
@@ -206,16 +192,12 @@ func main() {
 
 	fmt.Println(args)
 	go listen(args)
-	go publish(args)
 
 	r := mux.NewRouter()
-
 	r.HandleFunc("/{collection}", postTuple).Methods("POST")
 	r.HandleFunc("/{collection}", getAll).Methods("GET")
 	r.HandleFunc("/{collection}", delete).Methods("DELETE")
-
 	//11411
 	fmt.Println("api running on", args[2])
 	assert(http.ListenAndServe(args[2], r))
-
 }
