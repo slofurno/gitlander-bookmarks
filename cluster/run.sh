@@ -7,14 +7,14 @@ a3="tcp://127.0.0.1:40893"
 
 pids=""
 
-./cluster $a0 $a1 $a2 & pids="$pids $!"
-./cluster $a1 $a2 $a3 & pids="$pids $!"
-./cluster $a2 $a3 & pids="$pids $!"
-./cluster $a3 $a0 & pids="$pids $!"
+./cluster ":11411" "tcp://:11400" $a0 $a1 $a2 & pids="$pids $!"
+./cluster ":11412" "tcp://:11402" $a1 $a2 $a3 & pids="$pids $!"
+./cluster ":11413" "tcp://:11403" $a2 $a3 & pids="$pids $!"
+./cluster ":11414" "tcp://:11404" $a3 $a0 & pids="$pids $!"
 
 echo $pids
 
-sleep 6 
+sleep 30
 
 kill $pids
 

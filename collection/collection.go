@@ -5,6 +5,12 @@ import (
 	"sync"
 )
 
+type InsertRequest struct {
+	Key   []byte
+	Value []byte
+	Time  int64
+}
+
 type Tuple struct {
 	Time  int64
 	Key   []byte
@@ -13,8 +19,9 @@ type Tuple struct {
 
 //stored by time ascending
 type Collection interface {
-	Insert(int64, []byte, []byte)
-	Get([]byte) []byte
+	Insert(*Tuple) error
+	Update(*Tuple) error
+	Get() []*Tuple
 	Slice(int64, int) []*Tuple
 	Delete([]byte)
 }
@@ -31,42 +38,44 @@ type OrderedCollection struct {
 	lock   sync.Mutex
 }
 
-func (s *OrderedCollection) Insert(time int64, key, value []byte) error {
+func (s *OrderedCollection) Insert(item *Tuple) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if s.lookup[string(key)] != nil {
+	if s.lookup[string(item.Key)] != nil {
 		return errors.New("key already exists")
 	}
 
 	var i int
 	store := s.store
 	for i = len(store); i > 0; i-- {
-		if store[i-1].Time < time {
+		if store[i-1].Time < item.Time {
 			break
 		}
 	}
 
-	n := &Tuple{time, key, value}
 	next := make([]*Tuple, len(store)+1)
 	copy(next, store[:i])
 	copy(next[i+1:], store[i:])
-	next[i] = n
+	next[i] = item
 
 	s.store = next
-	s.lookup[string(key)] = n
+	s.lookup[string(item.Key)] = item
 	return nil
 }
 
-func (s *OrderedCollection) Get(key []byte) *Tuple {
+func (s *OrderedCollection) Get() []*Tuple {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	return s.lookup[string(key)]
+	res := make([]*Tuple, len(s.store))
+	copy(res, s.store)
+	return res
 }
 
-func (s *OrderedCollection) Update(key, value []byte) {
-
+func (s *OrderedCollection) Update(item *Tuple) error {
+	s.Delete(item.Key)
+	return s.Insert(item)
 }
 
 func (s *OrderedCollection) Slice(time int64, count int) []*Tuple {
@@ -110,6 +119,12 @@ func (s *OrderedCollection) Delete(key []byte) {
 		}
 	}
 
+	res := make([]*Tuple, len(s.store)-1)
+	copy(res, s.store[:i])
+	copy(res[i:], s.store[i+1:])
+
 	delete(s.lookup, string(key))
-	s.store = append(s.store[:i], s.store[i+1:]...)
+	//s.store = append(s.store[:i], s.store[i+1:]...)
+
+	s.store = res
 }

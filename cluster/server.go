@@ -1,17 +1,24 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-mangos/mangos/protocol/bus"
 	"github.com/go-mangos/mangos/protocol/pub"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/gorilla/mux"
 	"github.com/slofurno/bookmarks/collection"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 )
+
+func getCurrentTime() int64 {
+	nanos := time.Now().UnixNano()
+	return nanos / 1000000
+}
 
 type concurrentMap struct {
 	m    map[string]collection.Collection
@@ -22,7 +29,7 @@ func (s *concurrentMap) Get(key string) collection.Collection {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	ok, c := s.m[key]
+	c, ok := s.m[key]
 
 	if !ok {
 		c = collection.NewCollection()
@@ -32,13 +39,18 @@ func (s *concurrentMap) Get(key string) collection.Collection {
 	return c
 }
 
-var collections *concurrentMap
+var store *concurrentMap
+var outbox chan []byte
+var inbox chan []byte
 
 func init() {
-	collections = &concurrentMap{
+	store = &concurrentMap{
 		m:    make(map[string]collection.Collection),
 		lock: &sync.Mutex{},
 	}
+
+	outbox = make(chan []byte, 128)
+	inbox = make(chan []byte, 128)
 }
 
 func assert(err error) {
@@ -49,67 +61,117 @@ func assert(err error) {
 }
 
 func insert(res http.ResponseWriter, req *http.Request) {
+	fmt.Println("insert called")
+	vars := mux.Vars(req)
+	col := vars["collection"]
 
+	item := &collection.Tuple{}
+
+	body, _ := ioutil.ReadAll(req.Body)
+	err := json.Unmarshal(body, item)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	collection := store.Get(col)
+	collection.Update(item)
+
+	ok := []byte("ADD")
+	ok = append(ok, body...)
+	outbox <- ok
+
+	res.WriteHeader(200)
 }
 
-func get(res http.ResponseWriter, req *http.Request) {
+func getAll(res http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	key := vars["collection"]
 
+	encoder := json.NewEncoder(res)
+	col := store.Get(key)
+	items := col.Get()
+
+	for _, item := range items {
+		fmt.Println(string(item.Key), string(item.Value))
+	}
+
+	encoder.Encode(items)
 }
 
 func delete(res http.ResponseWriter, req *http.Request) {
+	//vars := mux.Vars(req)
+	//key := vars["key"]
+}
+
+func publish(args []string) {
 
 }
 
-func publish(outgoing chan []byte) {
-	publish, err := pub.NewSocket()
+func listen(args []string) {
+
+	publish, _ := pub.NewSocket()
 	publish.AddTransport(tcp.NewTransport())
 
-	assert(publish.Listen("tcp://*:11400"))
-
-	for msg := range outgoing {
-		assert(publish.Send(msg))
-	}
-}
-
-func listen(args []string, outgoing chan []byte) {
-
+	assert(publish.Listen(args[2]))
+	//"tcp://:11400"
 	sock, err := bus.NewSocket()
 
 	assert(err)
 
 	sock.AddTransport(tcp.NewTransport())
-	assert(sock.Listen(args[1]))
+	assert(sock.Listen(args[3]))
 
 	time.Sleep(time.Second)
 
-	for _, ad := range args[2:] {
+	for _, ad := range args[4:] {
 		assert(sock.Dial(ad))
 		fmt.Println("dialed", ad)
 	}
 
 	time.Sleep(time.Second)
 
-	assert(sock.Send([]byte("hey from " + args[1])))
+	go func() {
+		for {
+			select {
+			case next := <-outbox:
+				fmt.Println("publishing ours")
+				assert(sock.Send(next))
+				assert(publish.Send(next))
+
+			case forward := <-inbox:
+				fmt.Println("forwarding from bus")
+				assert(publish.Send(forward))
+			}
+
+		}
+	}()
 
 	for {
 		msg, err := sock.Recv()
 		assert(err)
-		outgoing <- msg
+		inbox <- msg
 	}
 }
 
+//http, pub, bus
 func main() {
 
-	outgoing := make(chan []byte, 32)
-	go listen(os.Args, outgoing)
-	go publish(outgoing)
+	args := os.Args
+
+	fmt.Println(args)
+	go listen(args)
+	go publish(args)
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/{key}", insert).Methods("POST")
-	r.HandleFunc("/{key}", get).Methods("GET")
-	r.HandleFunc("/{key}", delete).Methods("DELETE")
+	r.HandleFunc("/{collection}", insert).Methods("POST")
+	r.HandleFunc("/{collection}", getAll).Methods("GET")
+	r.HandleFunc("/{collection}", delete).Methods("DELETE")
 
-	http.ListenAndServe(":11411", nil)
+	//11411
+	fmt.Println("api running on", args[1])
+	assert(http.ListenAndServe(args[1], r))
 
 }
