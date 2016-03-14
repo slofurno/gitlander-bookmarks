@@ -346,38 +346,51 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 		b, _ := ioutil.ReadAll(r.Body)
 
 		br := &BookmarkRequest{}
-		err := json.Unmarshal(b, br)
+		json.Unmarshal(b, br)
+		/*
+			buf := []byte(br.Url)
+			//TODO: replace with survey w/ timeout?
+			resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
 
-		buf := []byte(br.Url)
-		//TODO: replace with survey w/ timeout?
-		resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
+			if err != nil {
+				fmt.Println("guess we had an error...")
+				//fmt.Println(err.Error())
+				return
+			}
 
-		if err != nil {
-			fmt.Println("guess we had an error...")
-			//fmt.Println(err.Error())
-			return
-		}
+			defer resp.Body.Close()
+			content, err := ioutil.ReadAll(resp.Body)
 
-		defer resp.Body.Close()
-		content, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Println("guess we had an error reading?")
+				return
+			}
 
-		if err != nil {
-			fmt.Println("guess we had an error reading?")
-			return
-		}
+		*/
 
 		bookmark := &Bookmark{
 			Id:          makeUuid(),
 			Url:         br.Url,
 			Description: br.Description,
 			Tags:        br.Tags,
-			Owner:       context.userinfo.userid,
+			Owner:       context.user,
 			Time:        getCurrentTime(),
-			Summary:     string(content),
+			//	Summary:     string(content),
 		}
 
-		dataStore.UpsertBookmark(context.userinfo, bookmark)
-		fmt.Fprintln(w, bookmark.Id)
+		buf, _ := json.Marshal(bookmark)
+
+		client := &ClusterClient{}
+		x := &Tuple{
+			Key:   bookmark.Id,
+			Time:  bookmark.Time,
+			Value: string(buf),
+		}
+
+		client.Post(context.user, x)
+
+		//dataStore.UpsertBookmark(context.userinfo, bookmark)
+	//	fmt.Fprintln(w, bookmark.Id)
 	case "GET":
 		fmt.Println("when am i calling this?")
 		userid := r.URL.Query().Get("id")
