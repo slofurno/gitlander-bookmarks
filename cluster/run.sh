@@ -14,8 +14,3 @@ pids=""
 
 echo $pids
 
-sleep 30
-
-kill $pids
-
-

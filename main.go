@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base32"
@@ -24,7 +23,6 @@ var client_secret string
 
 var globalSummary = map[string]int{}
 
-var database = NewFilebase("test.db")
 var db struct {
 	bookmarks     *Filebase
 	subscriptions *Filebase
@@ -104,55 +102,7 @@ func hashToken(uuid string) string {
 	return base32.StdEncoding.EncodeToString(b)
 }
 
-func migrateDatabase() {
-	scanner := bufio.NewScanner(database.Fd)
-	scanner.Split(bufio.ScanLines)
-
-	db.init = true
-	for scanner.Scan() {
-		du := &DataUnion{}
-		b := scanner.Bytes()
-		err := json.Unmarshal(b, du)
-
-		if err != nil {
-			fmt.Println(err.Error())
-			fmt.Println("bad json:", string(b))
-			continue
-		}
-
-		var userinfo *userInfo
-		var ok bool
-		userid := du.UserId
-
-		if userinfo, ok = userInfos[userid]; !ok {
-			userinfo = newUserInfo()
-			userinfo.userid = du.UserId
-
-			fmt.Println("regen user", userinfo.userid)
-			dataStore.AddUser(userinfo, du.Token)
-
-			userinfo.subscriptions.Add(userid, userid)
-			userInfos[userid] = userinfo
-		}
-
-		if du.Bookmark != nil {
-			dataStore.UpsertBookmark(userinfo, du.Bookmark)
-		} else if du.Sub != "" {
-			dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
-		} else {
-			userTokens[du.Token] = du.UserId
-			userinfo.name = du.Name
-		}
-	}
-
-	db.init = false
-}
-
 func init() {
-
-	db.bookmarks = NewFilebase("bookmarks.db")
-	db.users = NewFilebase("users.db")
-	db.subscriptions = NewFilebase("subscriptions.db")
 
 	var err error
 	cj, err := ioutil.ReadFile("secret/clientsecrets")
@@ -172,78 +122,22 @@ func init() {
 
 	client_secret = clientsecrets.Client_secret
 	client_id = clientsecrets.Client_id
-
-	secretKey, err = ioutil.ReadFile("secret/secret.key")
-	if err != nil {
-		panic("i need the secret key")
-	}
-
-	//somehow account for trailing newline
-	if secretKey[len(secretKey)-1] == 10 {
-		secretKey = secretKey[:len(secretKey)-1]
-	}
-	fmt.Println(secretKey)
-
-	readuser := func(b []byte) {
-		du := &DataUnion{}
-		err := json.Unmarshal(b, du)
-
+	/*
+		secretKey, err = ioutil.ReadFile("secret/secret.key")
 		if err != nil {
-			return
+			panic("i need the secret key")
 		}
 
-		var userinfo *userInfo
-		var ok bool
-		userid := du.UserId
-
-		if userinfo, ok = userInfos[userid]; !ok {
-			userinfo = newUserInfo()
-			userinfo.userid = du.UserId
-			userinfo.name = du.Name
-
-			dataStore.AddUser(userinfo, du.Token)
+		//somehow account for trailing newline
+		if secretKey[len(secretKey)-1] == 10 {
+			secretKey = secretKey[:len(secretKey)-1]
 		}
-
-	}
-
-	readSubscription := func(b []byte) {
-		du := &DataUnion{}
-		err := json.Unmarshal(b, du)
-
-		if err != nil {
-			return
-		}
-
-		userinfo := userInfos[du.UserId]
-
-		if du.Op == "add" {
-			dataStore.AddSubscription(userinfo, du.Sub, userInfos[du.Sub].name)
-		} else {
-			dataStore.DeleteSubscription(userinfo, du.Sub)
-		}
-	}
-
-	readbookmark := func(b []byte) {
-		du := &DataUnion{}
-		err := json.Unmarshal(b, du)
-
-		if err != nil {
-			return
-		}
-
-		userinfo := userInfos[du.UserId]
-		dataStore.UpsertBookmark(userinfo, du.Bookmark)
-	}
-
-	db.users.ReadRecords(readuser)
-	db.subscriptions.ReadRecords(readSubscription)
-	db.bookmarks.ReadRecords(readbookmark)
-	db.init = true
+		fmt.Println(secretKey)
+	*/
 }
 
 func main() {
 
-	fmt.Println(hashToken("beaabad2-03ad-4d2d-4486-e891456363d5"))
 	http.HandleFunc("/api/summary", summaryHandler)
 	http.HandleFunc("/api/img/", authed(imgHandler))
 	http.HandleFunc("/ws", authed(websocketHandler))
@@ -251,8 +145,11 @@ func main() {
 	http.HandleFunc("/api/bookmarks", authed(bookmarkHandler))
 	http.HandleFunc("/api/user", userHandler)
 	http.Handle("/", http.FileServer(http.Dir("static")))
-	//should only bind to local since were behind nginx
-	http.ListenAndServe("127.0.0.1:555", nil)
+	err := http.ListenAndServe(":555", nil)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestContext)) http.HandlerFunc {
