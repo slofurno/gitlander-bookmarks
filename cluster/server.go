@@ -100,7 +100,7 @@ func postTuple(res http.ResponseWriter, req *http.Request) {
 	//TODO: use update for everything?
 	collection.Update(item)
 
-	ok := []byte("ADD")
+	ok := []byte(col)
 	ok = append(ok, body...)
 	outbox <- ok
 

@@ -71,23 +71,36 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 	//connection := newUserConnection(context.userinfo.subscriptions, sock)
 	//defer connection.onstop()
 
-	client := NewClient()
+	/*
+		client := NewClient()
 
-	b, err := client.Get(context.user)
+		b, err := client.Get(context.user)
 
-	if err == nil {
-		fmt.Println(string(b))
-	} else {
-		fmt.Println("error reading get")
-	}
+		if err == nil {
+			fmt.Println(string(b))
+		} else {
+			fmt.Println("error reading get")
+		}
+
+		go func() {
+			for {
+				msg, err := client.sock.Recv()
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				fmt.Println(string(msg))
+			}
+		}()
+	*/
+
+	client := &ClusterClient{}
+
+	items := client.Fetch("ASDF")
 
 	go func() {
 		for {
-			msg, err := client.sock.Recv()
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-			fmt.Println(string(msg))
+			next := items.Next()
+			fmt.Println(next)
 		}
 	}()
 
