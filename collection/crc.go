@@ -1,4 +1,4 @@
-package main
+package collection
 
 /*
  * Copyright 2001-2010 Georges Menie (www.menie.org)

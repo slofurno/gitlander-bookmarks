@@ -9,7 +9,6 @@ import (
 	"github.com/nu7hatch/gouuid"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 var userTokens = map[string]string{}
@@ -52,6 +51,7 @@ type userinfoDto struct {
 type RequestContext struct {
 	isAuthed bool
 	userinfo *userInfo
+	user     string
 }
 
 func newUserInfo() *userInfo {
@@ -156,50 +156,16 @@ func authed(h func(w http.ResponseWriter, r *http.Request, context *RequestConte
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Authorization")
-		context := &RequestContext{}
 		auth := r.Header.Get("Authorization")
 
-		authParams := strings.Split(auth, ":")
-
-		var userid string = ""
-		var token string = ""
-
-		if len(authParams) == 2 {
-			userid = authParams[0]
-			token = authParams[1]
-		} else {
+		if auth == "" {
 			qs := r.URL.Query()
-			userid = qs.Get("user")
-			token = qs.Get("token")
+			auth = qs.Get("user")
 		}
 
-		if userid != "" && token != "" {
-			fmt.Println("userid", userid, "token", token)
-
-			var githubid string
-			var user *userInfo
-			var ok bool
-
-			if githubid, ok = userTokens[userid]; ok {
-
-				tb, _ := base32.StdEncoding.DecodeString(token)
-				mac := hmac.New(sha256.New, secretKey)
-				mac.Write([]byte(userid))
-				expected := mac.Sum(nil)
-
-				if hmac.Equal(expected, tb) {
-
-					if user, ok = userInfos[githubid]; ok {
-
-						context.isAuthed = true
-						context.userinfo = user
-						context.userinfo.userid = githubid
-						fmt.Println("user authed as: ", githubid)
-
-					}
-				}
-			}
-		}
+		context := &RequestContext{}
+		context.isAuthed = true
+		context.user = auth
 
 		h(w, r, context)
 	}

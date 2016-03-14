@@ -2,9 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base32"
 	"encoding/json"
 	"fmt"
 	"github.com/slofurno/ws"
@@ -61,17 +58,38 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 }
 
 func websocketHandler(w http.ResponseWriter, req *http.Request, context *RequestContext) {
-
-	if !context.isAuthed {
-		fmt.Println("not authed")
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	/*
+		if !context.isAuthed {
+			fmt.Println("not authed")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	*/
 
 	sock := ws.Upgrade(w, req)
 
-	connection := newUserConnection(context.userinfo.subscriptions, sock)
-	defer connection.onstop()
+	//connection := newUserConnection(context.userinfo.subscriptions, sock)
+	//defer connection.onstop()
+
+	client := NewClient()
+
+	b, err := client.Get(context.user)
+
+	if err == nil {
+		fmt.Println(string(b))
+	} else {
+		fmt.Println("error reading get")
+	}
+
+	go func() {
+		for {
+			msg, err := client.sock.Recv()
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			fmt.Println(string(msg))
+		}
+	}()
 
 	func() {
 		for {
@@ -84,7 +102,6 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 	}()
 
 	sock.Close()
-
 	fmt.Println("disconnected")
 }
 
@@ -162,22 +179,12 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("github user:", github_user)
 		userid := strconv.FormatUint(github_user.Id, 10)
-		userinfo := newUserInfo()
-		userinfo.userid = userid
-		usertoken := makeUuid()
-		userinfo.name = github_user.Login
 
-		dataStore.AddUser(userinfo, usertoken)
-		mac := hmac.New(sha256.New, secretKey)
-
-		mac.Write([]byte(usertoken))
-		b := mac.Sum(nil)
-		token := base32.StdEncoding.EncodeToString(b)
 		userResponse := struct {
 			User   string `json:"user"`
 			Token  string `json:"token"`
 			UserId string `json:"userid"`
-		}{usertoken, token, userid}
+		}{"", "", userid}
 
 		jb, err := json.Marshal(userResponse)
 
@@ -290,7 +297,7 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 			Url:         br.Url,
 			Description: br.Description,
 			Tags:        br.Tags,
-			Owner:       context.userinfo.userid,
+			Owner:       context.user,
 			Time:        getCurrentTime(),
 			Summary:     string(content),
 		}

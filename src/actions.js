@@ -21,7 +21,6 @@ function listen (ws) {
 }
 
 export function postCode (code) {
-  history.pushState('','','/');
 
   return function (dispatch) {
     return request({
@@ -44,11 +43,11 @@ export function postCode (code) {
 
 }
 
-export function tryLogin (storedid, storedtoken) {
+export function tryLogin (storedid) {
   return function (dispatch) {
     return new Promise((resolve, reject) => {
       let wsuri = origin.replace(/^http/, 'ws')
-      let ws = new WebSocket(`${wsuri}/ws?user=${storedid}&token=${storedtoken}`)
+      let ws = new WebSocket(`${wsuri}/ws?user=${storedid}`)
       ws.onerror = function(e) {
         reject(e) 
       }

@@ -40,8 +40,10 @@ function mapQueryString(s){
 var qs = mapQueryString(location.search.substr(1));
 var code = qs["code"];
 
+history.pushState('','','/');
+
 if (storedtoken) {
-  store.dispatch(tryLogin(storedid, storedtoken))
+  store.dispatch(tryLogin(accountid))
 } else if (code) {
   store.dispatch(postCode(code)) 
 
