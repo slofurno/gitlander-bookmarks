@@ -58,46 +58,25 @@ func imgHandler(w http.ResponseWriter, r *http.Request, context *RequestContext)
 }
 
 func websocketHandler(w http.ResponseWriter, req *http.Request, context *RequestContext) {
-	/*
-		if !context.isAuthed {
-			fmt.Println("not authed")
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-	*/
+	if !context.isAuthed {
+		fmt.Println("not authed")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	sock := ws.Upgrade(w, req)
-
-	//connection := newUserConnection(context.userinfo.subscriptions, sock)
-	//defer connection.onstop()
-
-	/*
-		client := NewClient()
-
-		b, err := client.Get(context.user)
-
-		if err == nil {
-			fmt.Println(string(b))
-		} else {
-			fmt.Println("error reading get")
-		}
-
-		go func() {
-			for {
-				msg, err := client.sock.Recv()
-				if err != nil {
-					fmt.Println(err.Error())
-				}
-				fmt.Println(string(msg))
-			}
-		}()
-	*/
-
 	fmt.Println("user connected:", context.user)
 
 	for x := range mergeFetch(context.user) {
-		fmt.Println(x)
+		b := []byte(x.Value)
+		next := &Bookmark{}
+		err := json.Unmarshal(b, next)
 
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+		sock.Write(b)
 	}
 
 	func() {
@@ -145,22 +124,18 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 
 	sub := r.URL.Query().Get("follow")
 
-	var ok bool
-	var subinfo *userInfo
-
-	if subinfo, ok = userInfos[sub]; !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "cant find sub")
-		//w.Write([]byte("cant find sub"))
-		return
-	}
-
 	switch r.Method {
 	case "DELETE":
 		dataStore.DeleteSubscription(context.userinfo, sub)
 	case "POST":
-		dataStore.AddSubscription(context.userinfo, sub, subinfo.name)
+		client := &ClusterClient{}
 
+		x := &Tuple{
+			Time:  0,
+			Key:   sub,
+			Value: sub,
+		}
+		client.Post("ls"+context.user, x)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -253,88 +228,35 @@ func summaryHandler(w http.ResponseWriter, rep *http.Request) {
 func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
 
 	method := r.Method
-	var err error
-
 	switch method {
 
-	case "DELETE":
-		if !context.isAuthed {
-			w.WriteHeader(http.StatusUnauthorized)
+	case "GET":
+
+		qs := r.URL.Query()
+		terms := qs["t"]
+		if len(terms) == 0 {
+			w.WriteHeader(200)
 			return
 		}
 
-		b, _ := ioutil.ReadAll(r.Body)
-		br := &BookmarkRequest{}
-		err := json.Unmarshal(b, br)
+		seen := map[string]int{}
+		client := &ClusterClient{}
 
-		if err != nil {
-			w.WriteHeader(http.StatusNotAcceptable)
-			return
-		}
-
-		bookmark := &Bookmark{
-			Id:          br.Id,
-			Url:         br.Url,
-			Description: br.Description,
-			Tags:        br.Tags,
-			Owner:       context.userinfo.userid,
-			Time:        getCurrentTime(),
-		}
-
-		dataStore.UpsertBookmark(context.userinfo, bookmark)
-		w.WriteHeader(http.StatusOK)
-
-	case "PUT":
-
-		if !context.isAuthed {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		b, _ := ioutil.ReadAll(r.Body)
-		br := &BookmarkRequest{}
-		err = json.Unmarshal(b, br)
-
-		if err != nil {
-			w.WriteHeader(http.StatusNotAcceptable)
-			return
-		}
-
-		var content []byte
-
-		if len(br.Url) > 4 {
-
-			buf := []byte(br.Url)
-			//TODO: replace with survey w/ timeout?
-			resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
-
-			if err != nil {
-				fmt.Println(err.Error())
-				return
-			}
-
-			//code duplication is bad
-			defer resp.Body.Close()
-			content, err = ioutil.ReadAll(resp.Body)
-
-			if err != nil {
-				fmt.Println(err.Error())
-				return
+		for _, x := range terms {
+			for _, user := range client.Get("t:" + x) {
+				seen[user.Key] += 1
 			}
 		}
 
-		bookmark := &Bookmark{
-			Id:          br.Id,
-			Url:         br.Url,
-			Description: br.Description,
-			Tags:        br.Tags,
-			Owner:       context.user,
-			Time:        getCurrentTime(),
-			Summary:     string(content),
+		matches := []string{}
+
+		for k, v := range seen {
+			if v == len(terms) {
+				matches = append(matches, k)
+			}
 		}
 
-		dataStore.UpsertBookmark(context.userinfo, bookmark)
-		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, matches)
 
 	case "POST":
 
@@ -347,26 +269,6 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 
 		br := &BookmarkRequest{}
 		json.Unmarshal(b, br)
-		/*
-			buf := []byte(br.Url)
-			//TODO: replace with survey w/ timeout?
-			resp, err := http.Post("http://localhost:8765", "text/plain", bytes.NewBuffer(buf))
-
-			if err != nil {
-				fmt.Println("guess we had an error...")
-				//fmt.Println(err.Error())
-				return
-			}
-
-			defer resp.Body.Close()
-			content, err := ioutil.ReadAll(resp.Body)
-
-			if err != nil {
-				fmt.Println("guess we had an error reading?")
-				return
-			}
-
-		*/
 
 		bookmark := &Bookmark{
 			Id:          makeUuid(),
@@ -389,23 +291,13 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 
 		client.Post(context.user, x)
 
-		//dataStore.UpsertBookmark(context.userinfo, bookmark)
-	//	fmt.Fprintln(w, bookmark.Id)
-	case "GET":
-		fmt.Println("when am i calling this?")
-		userid := r.URL.Query().Get("id")
+		for _, tag := range bookmark.Tags {
+			tag = "t:" + tag
+			x := &Tuple{
+				Key: context.user,
+			}
 
-		if userid == "" {
-			return
-		}
-
-		if user, ok := userInfos[userid]; ok {
-
-			bookmarks := user.bookmarks.Fetch()
-			j, _ := json.Marshal(bookmarks)
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(j)
-			return
+			client.Post(tag, x)
 		}
 
 	}

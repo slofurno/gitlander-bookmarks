@@ -133,10 +133,31 @@ func (s *ClusterClient) Get(key string) ([]byte, error) {
 }
 */
 
+func (s *ClusterClient) Get(key string) []*Tuple {
+	si := collection.Crc16([]byte(key)) % 4
+
+	xs := []*Tuple{}
+	res, err := http.Get(shards[si] + key)
+
+	if err != nil {
+		return nil
+	}
+
+	b, _ := ioutil.ReadAll(res.Body)
+	err = json.Unmarshal(b, &xs)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return xs
+}
+
 func (s *ClusterClient) Post(key string, item *Tuple) (*http.Response, error) {
 	si := collection.Crc16([]byte(key)) % 4
 	b, _ := json.Marshal(item)
 	buf := bytes.NewBuffer(b)
+
+	fmt.Println("shard:", si)
 
 	return http.Post(shards[si]+key, "application/json", buf)
 }
