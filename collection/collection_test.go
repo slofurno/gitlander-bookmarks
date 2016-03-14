@@ -16,8 +16,8 @@ func init() {
 		rand.Read(b)
 
 		item := &Tuple{
-			Key:   b,
-			Value: []byte("this is value number " + strconv.Itoa(i)),
+			Key:   string(b),
+			Value: "this is value number " + strconv.Itoa(i),
 			Time:  int64(i),
 		}
 
@@ -26,12 +26,10 @@ func init() {
 
 }
 
-func contains(src []*Tuple, key []byte) bool {
-
-	match := string(key)
+func contains(src []*Tuple, match string) bool {
 
 	for _, c := range src {
-		if string(c.Key) == match {
+		if c.Key == match {
 			return true
 		}
 	}
@@ -39,30 +37,26 @@ func contains(src []*Tuple, key []byte) bool {
 	return false
 }
 
-func find(src []*Tuple, key []byte) *Tuple {
-
-	match := string(key)
-
+func find(src []*Tuple, match string) *Tuple {
 	for _, c := range src {
-		if string(c.Key) == match {
+		if c.Key == match {
 			return c
 		}
 	}
-
 	return nil
 }
 
-func compare(n []byte, m []byte) bool {
-	return string(n) == string(m)
+func compare(n, m string) bool {
+	return n == m
 }
 
 func TestAddDelete(t *testing.T) {
 
-	key := []byte("HEYKEY")
+	key := "HEYKEY"
 
 	item := &Tuple{
 		Key:   key,
-		Value: []byte("some kidna value"),
+		Value: "some kidna value",
 		Time:  87,
 	}
 
@@ -85,9 +79,9 @@ func TestAddDelete(t *testing.T) {
 
 func TestMutate(t *testing.T) {
 
-	key := []byte("someotherkey")
-	val1 := []byte("myvalue")
-	val2 := []byte("somenewvalue")
+	key := "someotherkey"
+	val1 := "myvalue"
+	val2 := "somenewvalue"
 
 	item := &Tuple{
 		Key:   key,

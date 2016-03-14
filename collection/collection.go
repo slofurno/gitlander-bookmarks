@@ -7,8 +7,8 @@ import (
 
 type Tuple struct {
 	Time  int64
-	Key   []byte
-	Value []byte
+	Key   string
+	Value string
 }
 
 //stored by time ascending
@@ -17,7 +17,7 @@ type Collection interface {
 	Update(*Tuple) error
 	Get() []*Tuple
 	Slice(int64, int) []*Tuple
-	Delete([]byte)
+	Delete(string)
 }
 
 func NewCollection() *OrderedCollection {
@@ -36,7 +36,7 @@ func (s *OrderedCollection) Insert(item *Tuple) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if s.lookup[string(item.Key)] != nil {
+	if s.lookup[item.Key] != nil {
 		return errors.New("key already exists")
 	}
 
@@ -54,7 +54,7 @@ func (s *OrderedCollection) Insert(item *Tuple) error {
 	next[i] = item
 
 	s.store = next
-	s.lookup[string(item.Key)] = item
+	s.lookup[item.Key] = item
 	return nil
 }
 
@@ -95,11 +95,11 @@ func (s *OrderedCollection) Slice(time int64, count int) []*Tuple {
 	return res
 }
 
-func (s *OrderedCollection) Delete(key []byte) {
+func (s *OrderedCollection) Delete(key string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	item := s.lookup[string(key)]
+	item := s.lookup[key]
 
 	if item == nil {
 		return
@@ -117,7 +117,7 @@ func (s *OrderedCollection) Delete(key []byte) {
 	copy(res, s.store[:i])
 	copy(res[i:], s.store[i+1:])
 
-	delete(s.lookup, string(key))
+	delete(s.lookup, key)
 	//s.store = append(s.store[:i], s.store[i+1:]...)
 
 	s.store = res

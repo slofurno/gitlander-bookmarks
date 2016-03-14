@@ -29,8 +29,8 @@ var pubshards = []string{
 
 type Tuple struct {
 	Time  int64
-	Key   []byte
-	Value []byte
+	Key   string
+	Value string
 }
 
 type ClusterIterator struct {
@@ -52,12 +52,14 @@ func check(err error) bool {
 	return true
 }
 
-func (s *ClusterClient) Fetch(key string) *ClusterIterator {
+func (s *ClusterClient) Fetch(key string) <-chan *Tuple {
 	sock, _ := sub.NewSocket()
 	sock.AddTransport(tcp.NewTransport())
 
 	bkey := []byte(key)
 	si := collection.Crc16(bkey) % 4
+
+	fmt.Println("index", si)
 	uri := shards[si]
 
 	check(sock.Dial(pubshards[si]))
@@ -87,7 +89,7 @@ func (s *ClusterClient) Fetch(key string) *ClusterIterator {
 		}
 	}()
 
-	return &ClusterIterator{items}
+	return items
 }
 
 func die(format string, v ...interface{}) {

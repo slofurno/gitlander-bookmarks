@@ -93,16 +93,12 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 		}()
 	*/
 
-	client := &ClusterClient{}
+	fmt.Println("user connected:", context.user)
 
-	items := client.Fetch("ASDF")
+	for x := range mergeFetch(context.user) {
+		fmt.Println(x)
 
-	go func() {
-		for {
-			next := items.Next()
-			fmt.Println(next)
-		}
-	}()
+	}
 
 	func() {
 		for {
@@ -116,6 +112,28 @@ func websocketHandler(w http.ResponseWriter, req *http.Request, context *Request
 
 	sock.Close()
 	fmt.Println("disconnected")
+}
+
+func mergeFetch(user string) chan *Tuple {
+	user = "ls" + user
+	client := &ClusterClient{}
+	subs := client.Fetch(user)
+	res := make(chan *Tuple, 64)
+
+	push := func(xs <-chan *Tuple) {
+		for x := range xs {
+			res <- x
+		}
+	}
+
+	go func() {
+		for s := range subs {
+			c := client.Fetch(string(s.Key))
+			go push(c)
+		}
+	}()
+
+	return res
 }
 
 func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *RequestContext) {
