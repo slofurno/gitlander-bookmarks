@@ -249,14 +249,25 @@ func bookmarkHandler(w http.ResponseWriter, r *http.Request, context *RequestCon
 		}
 
 		matches := []string{}
+		marks := map[string][]*Bookmark{}
 
 		for k, v := range seen {
 			if v == len(terms) {
 				matches = append(matches, k)
+				for _, tuple := range client.Get(k) {
+					x := &Bookmark{}
+					err := json.Unmarshal([]byte(tuple.Value), x)
+					if err == nil {
+						marks[k] = append(marks[k], x)
+					}
+				}
 			}
 		}
 
-		fmt.Fprint(w, matches)
+		b, _ := json.Marshal(marks)
+		w.Write(b)
+
+		//fmt.Fprint(w, marks)
 
 	case "POST":
 

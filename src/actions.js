@@ -38,7 +38,6 @@ export function popTag () {
 }
 
 export function updateTagInput (value) {
-  console.log("tag val", value)
   return {
     type: UPDATE_TAG_INPUT,
     value
@@ -60,6 +59,24 @@ function listen (ws) {
   ws.onmessage = function(e) {
 
   } 
+}
+
+export function searchUsers (tags) {
+  return function (dispatch) {
+    if (tags.length === 0) {
+      return
+    }
+
+    let params = tags.reduce((a,c) => a + "&t=" + c)
+    return request({
+      url:`/api/bookmarks?t=${params}`,
+      method:"GET"
+    })
+    .then(log)
+    .catch(log)
+
+  }
+
 }
 
 export function postBookmark (bookmark, token) {
