@@ -135,7 +135,11 @@ func subscriptionHandler(w http.ResponseWriter, r *http.Request, context *Reques
 			Key:   sub,
 			Value: sub,
 		}
-		client.Post("ls"+context.user, x)
+		_, err := client.Post("ls"+context.user, x)
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
