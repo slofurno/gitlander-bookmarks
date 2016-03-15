@@ -1,5 +1,12 @@
 import request from './request'
 export const ADD_BOOKMARK = 'ADD_BOOKMARK'
+export const SET_TOKEN = 'SET_TOKEN'
+
+export const PUSH_TAG = 'PUSH_TAG'
+export const POP_TAG = 'POP_TAG'
+export const TAG_CLICK = 'TAG_CLICK'
+export const UPDATE_TAG_INPUT = 'UPDATE_TAG_INPUT'
+
 
 const origin = location.origin
 
@@ -7,6 +14,41 @@ export function addBookmark (bookmark) {
   return {
     type: ADD_BOOKMARK,
     bookmark
+  }
+}
+
+export function setToken (token) {
+  return {
+    type: SET_TOKEN,
+    token
+  }
+}
+
+export function pushTag (tag) {
+  return {
+    type: PUSH_TAG,
+    tag
+  }
+}
+
+export function popTag () {
+  return {
+    type: POP_TAG
+  }
+}
+
+export function updateTagInput (value) {
+  console.log("tag val", value)
+  return {
+    type: UPDATE_TAG_INPUT,
+    value
+  }
+}
+
+export function onTagClick (tag) {
+  return {
+    type: TAG_CLICK,
+    tag
   }
 }
 
@@ -18,6 +60,16 @@ function listen (ws) {
   ws.onmessage = function(e) {
 
   } 
+}
+
+export function postBookmark (bookmark, token) {
+  return function (dispatch) {
+    return request({
+      url:`/api/bookmarks`,
+      method: "POST",
+      headers: {"Authorization": token}
+    })
+  }
 }
 
 export function postCode (code) {
@@ -36,7 +88,6 @@ export function postCode (code) {
       localStorage.setItem("accountid", userid);
 
       dispatch(tryLogin(user, token))
-      
     })
     .catch(log)
   }
@@ -56,8 +107,12 @@ export function tryLogin (storedid) {
       }
     })
     .then(ws => {
-      ws.onmessage = (e) => log(e)  
-      
+      ws.onmessage = (e) => {
+        let x = JSON.parse(e.data)  
+        dispatch(addBookmark(x))
+      }
+
+      dispatch(setToken(storedid))
     })
     .catch(log)
   } 

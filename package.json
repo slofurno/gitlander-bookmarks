@@ -18,10 +18,12 @@
     "babel-preset-react": "^6.3.13",
     "react": "^0.14.6",
     "react-dom": "^0.14.6",
+    "react-modal": "^0.6.1",
     "react-redux": "^4.0.6",
+    "react-tag-search": "^0.8.1",
     "redux": "^3.0.6",
     "redux-thunk": "^1.0.3",
-    "webpack": "^1.12.12",
-    "reselect": "^2.0.3"
+    "reselect": "^2.0.3",
+    "webpack": "^1.12.12"
   }
 }

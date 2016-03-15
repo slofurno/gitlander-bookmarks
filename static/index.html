@@ -1,227 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html class="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-
-@font-face{
-    font-family: 'Fira Mono';
-    src: url('eot/FiraMono-Regular.eot');
-    src: local('Fira Mono'),
-         url('eot/FiraMono-Regular.eot') format('embedded-opentype'),
-         url('woff/FiraMono-Regular.woff') format('woff'),
-         url('ttf/FiraMono-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
+body {
+  background-color:#fdf6e3;
+  color:#268bd2;
 }
-
 * {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  font-family: "Fira Mono";
 }
-
 a{
-  color:mediumspringgreen;
+  color:#268bd2;
   text-decoration: none;
 }
-
 a:active, a:hover {
   text-decoration: underline;
-}
-
-body {
-  font-size:100%;
-  color:hsl(220, 14%, 71%);
-}
-
-.linear-transition {
-  -webkit-transition: all .5s;
-  -moz-transition: all .5s;
-  -ms-transition: all .5s;
-  -o-transition: all .5s;
-  transition: all .5s;
-}
-
-.bookmark {
-  vertical-align: top;
-  display:inline-block;
-  background-color:rgb(51, 56, 66);
-  color:hsl(220, 14%, 71%);
-  padding: 0.4em 0.6em;
-  min-height:100%;
-  width:100%;
-  /*border: 1px solid rgb(24, 26, 31);*/
-  border: none;
-  word-wrap: break-word;
-}
-
-button{
-  border:0;
-  font-size: 1.0em;
-  color:ghostwhite;
-  background-color: hsl(220,100%,66%);
-  padding:0.8em 0.6em;
-  outline: none;
-  cursor: pointer;
-  margin-right: 10px;
-
-  -webkit-transition: background-color .5s;
-  -moz-transition: background-color .5s;
-  -ms-transition: background-color .5s;
-  -o-transition: background-color .5s;
-  transition: background-color .5s;
-}
-
-button:hover {
-  background-color: lightsteelblue;
-  outline: none;
-
-}
-
-button:active{
-  outline: none;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-}
-
-input{
-  padding:0.8em 0.6em;
-  margin: 0.6em 0;
-  width:100%;
-  color:hsl(220, 14%, 71%);
-  background-color: hsl(220,13%,18%);
-  outline: none;
-  /*border:2px solid hsl(220, 14%, 50%);*/
-
-  border-color: hsl(220, 14%, 50%);
-  border-style:solid;
-  border-width: 2px;
-
-  -webkit-transition: border-color .5s;
-  -moz-transition: border-color .5s;
-  -ms-transition: border-color .5s;
-  -o-transition: border-color .5s;
-  transition: border-color .5s;
-}
-
-input[type="text"] {
-  border-width: 0 0 2px 0;
-}
-
-input:hover, input:focus, input:active{
-  border-color:springgreen;
-}
-
-.input {
-  padding:0.8em 0.6em;
-  margin: 0.6em 0;
-  width:100%;
-  color:hsl(220, 14%, 71%);
-  background-color: hsl(220,13%,18%);
-  outline: none;
-  /*border:2px solid hsl(220, 14%, 50%);*/
-
-  border-color: hsl(220, 14%, 50%);
-  border-style:solid;
-  border-width: 0 0 2px 0;
-
-  -webkit-transition: border-color .5s;
-  -moz-transition: border-color .5s;
-  -ms-transition: border-color .5s;
-  -o-transition: border-color .5s;
-  transition: border-color .5s;
-}
-
-.input.active {
-  border-color:springgreen;
-}
-
-.tag{
-  display:inline-block;
-  background-color:hsl(220, 14%, 71%);
-  color:hsl(220,13%,18%);
-  line-height:1.2em;
-  padding: 0.6em 0.5em;
-  margin: 0.2em 0.4em 0.2em 0;
-  cursor: pointer;
-
-  -webkit-transition: background-color .5s;
-  -moz-transition: background-color .5s;
-  -ms-transition: background-color .5s;
-  -o-transition: background-color .5s;
-  transition: background-color .5s;
-
-}
-.tag:hover{
-  background-color:hsl(220, 14%, 50%);
-}
-
-
-.container{
-  font-size: 0.8em;
-  position:relative;
-  width:100%;
-  padding:5px 10px;
-  margin: auto;
-  height:100%;
-  min-height:600px;
-  background-color:hsl(220,13%,18%);
-}
-
-.wrap-bar{
-  position:relative;
-  vertical-align: top;
-  padding:0;
-  margin:0;
-  overflow-y: hidden;
-  height:110px;
-  display:inline-block;
-  margin: 0.6em 0.6em 0 0;
-
-}
-
-.wrap-bar:hover{
-  vertical-align: top;
-  overflow-y: visible;
-  z-index: 5;
-}
-
-.section{
-  margin: 0.4em 0;
-  padding: 0.4em 0.4em;
-}
-
-.raised{
-  /*box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.26), 0px 0px 2px 0px rgba(0, 0, 0, 0.22);*/
-  box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.37);
-}
-
-.bargraph{
-  background-color:hsl(220,13%,18%);
-  margin:2px 0 0 0;
-  padding:2px;
-  border:1px solid rgb(24, 26, 31);
-  color:hsl(220, 14%, 71%);
-  overflow-x: visible;
-  word-wrap: normal;
-}
-
-.float-right{
-  float:right;
-}
-
-.smaller{
 }
 </style>
 </head>
 <body>
-
-<div id="root" class="container raised"></div>
-
+<div id="root"></div>
 <script src="bundle.js"></script>
-
 </body>
 </html>
